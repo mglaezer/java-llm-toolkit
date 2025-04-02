@@ -40,19 +40,19 @@ public record LLM(
     }
 
     private static final LLMProvider OPENAI =
-            new CachingLLMProvider(new OpenAiChatModelProvider(null, Env.getRequired("OPENAI_API_KEY")));
+            new CachingLLMProvider(new OpenAiChatModelProvider(null, Env.get("OPENAI_API_KEY")));
 
     private static final LLMProvider GROQ = new CachingLLMProvider(
-            new OpenAiChatModelProvider(Env.getRequired("GROQ_API_KEY"), "https://api.groq.com/openai/v1/"));
+            new OpenAiChatModelProvider(Env.get("GROQ_API_KEY"), "https://api.groq.com/openai/v1/"));
 
-    private static final LLMProvider ANTHROPIC = new CachingLLMProvider(new AnthropicChatModelProvider());
-    private static final LLMProvider GOOGLE = new CachingLLMProvider(new GoogleChatModelProvider());
+    private static final LLMProvider ANTHROPIC = new CachingLLMProvider(new AnthropicChatModelProvider(null));
+    private static final LLMProvider GOOGLE = new CachingLLMProvider(new GoogleChatModelProvider(null));
 
     private static final LLMProvider DEEPSEEK =
-            new AltOpenAiLLMProvider("https://api.deepseek.com/v1", Env.getRequired("DEEPSEEK_API_KEY"));
+            new AltOpenAiLLMProvider("https://api.deepseek.com/v1", Env.get("DEEPSEEK_API_KEY"));
 
     private static final LLMProvider INFERENCE =
-            new AltOpenAiLLMProvider("https://api.inference.net/v1", Env.getRequired("INFERENCE_API_KEY"));
+            new AltOpenAiLLMProvider("https://api.inference.net/v1", Env.get("INFERENCE_API_KEY"));
 
     public static final LLM GPT_o1 = of("o1", OPENAI, true);
     public static final LLM GPT_o3_MINI = of("o3-mini", OPENAI, true);

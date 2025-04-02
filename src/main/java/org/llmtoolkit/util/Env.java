@@ -20,4 +20,8 @@ public class Env {
 
         return value.strip();
     }
+
+    public static String get(String name) {
+        return dotenv.get(name);
+    }
 }

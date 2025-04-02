@@ -7,6 +7,13 @@ import org.llmtoolkit.core.LLM;
 import org.llmtoolkit.util.Env;
 
 public class AnthropicChatModelProvider implements ChatModelProvider {
+
+    private String apiKey;
+
+    public AnthropicChatModelProvider(String apiKey) {
+        this.apiKey = apiKey;
+    }
+
     @Override
     public ChatLanguageModel createChatModel(LLM llm) {
         if (llm.reasoningEffort() != null) {
@@ -14,8 +21,10 @@ public class AnthropicChatModelProvider implements ChatModelProvider {
                     "Reasoning effort is not supported for Anthropic thinking mode, use thinking tokens instead");
         }
 
+        if (apiKey == null) apiKey = Env.getRequired("ANTHROPIC_API_KEY");
+
         AnthropicChatModel.AnthropicChatModelBuilder builder =
-                AnthropicChatModel.builder().modelName(llm.model()).apiKey(Env.getRequired("ANTHROPIC_API_KEY"));
+                AnthropicChatModel.builder().modelName(llm.model()).apiKey(apiKey);
 
         if (llm.thinking() && (llm.thinkingTokens() == null || llm.maxTokens() == null)) {
             throw new RuntimeException("Max tokens and thinking tokens must be set for thinking mode");

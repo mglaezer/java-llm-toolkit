@@ -44,6 +44,7 @@ ext {
 
 
 dependencies {
+    implementation 'com.google.guava:guava:33.4.6-jre'
     implementation "org.projectlombok:lombok:${lombokVersion}"
     annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
 
@@ -83,8 +84,10 @@ tasks.named('javadoc') {
 
 publishing {
     publications {
+        //noinspection GroovyAssignabilityCheck
         maven(MavenPublication) {
-		from components.java
+		//noinspection GroovyAssignabilityCheck
+            from components.java
         }
     }
 }
