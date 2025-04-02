@@ -17,9 +17,10 @@ public interface ProgrammingLanguagesPrompt {
 
     CodeResolver templatesRoot = new DirectoryCodeResolver(Path.of("src/test/java"));
 
-    Demo SOME_CRAP = new Demo("demo", List.of("a", "b", "c"));
+    ChooseFrom SOME_CRAP = new ChooseFrom(
+            "glorious", List.of("Java", "JavaScript", "Python", "Ruby", "Go", "Rust", "C++", "C#", "Scala", "Fortran"));
 
-    record Demo(String name, List<String> list) {}
+    record ChooseFrom(String adjective, List<String> options) {}
 
     record Languages(List<Language> languages) {
         @Cue("Programming language")
@@ -37,15 +38,15 @@ public interface ProgrammingLanguagesPrompt {
 
     @PT(templatePath = "programming_languages_prompt.jte")
     List<Languages.Language> getBestLanguagesAsList(
-            @PP("count") int count, @PP("examplesCount") int examplesCount1, @PP("demo") Demo demo);
+            @PP("count") int count, @PP("examplesCount") int examplesCount1, @PP("chooseFrom") ChooseFrom chooseFrom);
 
     @PT(templatePath = "programming_languages_prompt.jte")
     Languages getBestLanguagesAsObject(
-            @PP("count") int count, @PP("examplesCount") int examplesCount1, @PP("demo") Demo demo);
+            @PP("count") int count, @PP("examplesCount") int examplesCount1, @PP("chooseFrom") ChooseFrom chooseFrom);
 
     @PT(templatePath = "programming_languages_prompt.jte")
     String getBestLanguagesAsString(
-            @PP("count") int count, @PP("examplesCount") int examplesCount, @PP("demo") Demo demo);
+            @PP("count") int count, @PP("examplesCount") int examplesCount, @PP("chooseFrom") ChooseFrom chooseFrom);
 
     static void main(String[] args) {
         demoLLMString();

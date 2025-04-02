@@ -540,6 +540,12 @@ public class ClassToString {
     }
 
     private static String formatParameter(Parameter param, boolean qualifyNestedClassNames) {
+        if (!param.isNamePresent()) {
+            throw new UnsupportedOperationException("Parameter names are not present in "
+                    + param.getDeclaringExecutable().getDeclaringClass().getName()
+                    + ". Please compile with '-parameters' flag or use Java 21+");
+        }
+
         StringBuilder sb = new StringBuilder();
 
         // Get all annotations including type annotations
