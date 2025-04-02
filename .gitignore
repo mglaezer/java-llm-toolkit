@@ -2,7 +2,7 @@
 .gradle/
 build/
 gradle-app.setting
-!gradle-wrapper.jar
+
 .gradletasknamecache
 
 # IntelliJ IDEA
@@ -37,6 +37,8 @@ bin/
 hs_err_pid*
 replay_pid*
 
+# Exception for Gradle Wrapper
+!gradle-wrapper.jar
 # Local configuration
 local.properties
 .env
