@@ -7,6 +7,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.List;
 import org.junit.jupiter.api.Test;
+import org.llmtoolkit.util.ClassToString;
 
 @SuppressWarnings("unused")
 class ClassToStringTest {

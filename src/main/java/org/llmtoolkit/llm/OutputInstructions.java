@@ -1,5 +1,7 @@
 package org.llmtoolkit.llm;
 
+import org.llmtoolkit.util.ClassToString;
+
 public class OutputInstructions {
 
     private static final String INSTRUCTIONS_FOOTER =

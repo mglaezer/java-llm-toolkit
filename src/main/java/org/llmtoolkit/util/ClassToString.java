@@ -1,4 +1,4 @@
-package org.llmtoolkit.llm;
+package org.llmtoolkit.util;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;

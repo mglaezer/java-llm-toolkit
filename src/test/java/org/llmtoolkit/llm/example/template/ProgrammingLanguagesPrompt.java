@@ -1,4 +1,4 @@
-package org.llmtoolkit.llm.example;
+package org.llmtoolkit.llm.example.template;
 
 import dev.langchain4j.model.googleai.GoogleAiGeminiChatModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
@@ -9,7 +9,6 @@ import java.nio.file.Path;
 import java.util.List;
 import org.llmtoolkit.llm.*;
 import org.llmtoolkit.util.Env;
-import org.llmtoolkit.util.PMP;
 import org.llmtoolkit.util.json.SerArray;
 import org.llmtoolkit.util.json.SerObject;
 
@@ -50,8 +49,8 @@ public interface ProgrammingLanguagesPrompt {
 
     static void main(String[] args) {
         demoLLMString();
-        PMP.profile(ProgrammingLanguagesPrompt::demoLLMList);
-        PMP.profile(ProgrammingLanguagesPrompt::demoLLMObject);
+        demoLLMList();
+        demoLLMObject();
         demoAiServicesList();
         demoAiServicesObject();
     }

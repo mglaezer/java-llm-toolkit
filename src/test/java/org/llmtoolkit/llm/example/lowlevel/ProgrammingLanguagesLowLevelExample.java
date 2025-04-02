@@ -1,18 +1,14 @@
-package org.llmtoolkit.llm.example;
+package org.llmtoolkit.llm.example.lowlevel;
 
 import org.llmtoolkit.llm.LLM;
 import org.llmtoolkit.llm.OutputInstructions;
-import org.llmtoolkit.llm.example.ProgrammingLanguagesPrompt.Languages;
-import org.llmtoolkit.util.PMP;
+import org.llmtoolkit.llm.example.template.ProgrammingLanguagesPrompt.Languages;
 import org.llmtoolkit.util.json.SerObject;
 
 public class ProgrammingLanguagesLowLevelExample {
 
     public static void main(String[] args) {
-        PMP.profile(ProgrammingLanguagesLowLevelExample::demoSingleObjectResult);
-    }
 
-    private static void demoSingleObjectResult() {
         String outputInstructions = OutputInstructions.singleObjectInstructions(Languages.class);
         System.out.println(outputInstructions);
 
