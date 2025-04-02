@@ -39,3 +39,5 @@ replay_pid*
 
 # Local configuration
 local.properties
+.env
+

@@ -34,4 +34,32 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
-This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the Apache License 2.0.
+
+## Requirements
+
+### Java Version
+- Java 17 or higher
+
+### Compiler Settings
+When using Java 17-20, you need to compile your code with parameter names retained:
+
+#### Gradle
+```groovy
+tasks.withType(JavaCompile) {
+    options.compilerArgs += ['-parameters']
+}
+```
+
+#### Maven
+```xml
+<plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-compiler-plugin</artifactId>
+    <configuration>
+        <parameters>true</parameters>
+    </configuration>
+</plugin>
+```
+
+> **Note**: This requirement is automatically satisfied in Java 21+ without additional configuration.
