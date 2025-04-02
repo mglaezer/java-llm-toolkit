@@ -395,12 +395,12 @@ public class JSONRepair {
 
         private void resetMarker() {
             if (!marker.isEmpty()) {
-                marker.removeLast();
+                marker.remove(marker.size() - 1);
             }
         }
 
         private String getMarker() {
-            return !marker.isEmpty() ? marker.getLast() : null;
+            return !marker.isEmpty() ? marker.get(marker.size() - 1) : null;
         }
     }
 }

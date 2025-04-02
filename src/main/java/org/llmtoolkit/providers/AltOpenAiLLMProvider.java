@@ -1,6 +1,6 @@
-package org.llmtoolkit.llm.providers;
+package org.llmtoolkit.providers;
 
-import org.llmtoolkit.llm.LLM;
+import org.llmtoolkit.core.LLM;
 
 public class AltOpenAiLLMProvider implements LLMProvider {
     private final AltClient client;

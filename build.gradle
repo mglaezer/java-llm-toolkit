@@ -1,9 +1,21 @@
+//file:noinspection SpellCheckingInspection
 plugins {
     id 'java'
-
     id 'java-library'
     id 'maven-publish'
-    id 'com.diffplug.spotless' version '6.25.0'  // Changed from palantir to spotless
+    id 'com.diffplug.spotless' version '6.25.0'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+    withJavadocJar()
+    withSourcesJar()
+}
+
+// enable parameter names retention
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs += ['-parameters']
 }
 
 spotless {
@@ -27,46 +39,31 @@ repositories {
 ext {
     langchain4jVersion = '1.0.0-beta2'
     lombokVersion = '1.18.38'
+    junitVersion = '5.9.2'
 }
 
-
-java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
-    withJavadocJar()
-    withSourcesJar()
-}
 
 dependencies {
-    // Core dependencies
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.2'
     implementation "org.projectlombok:lombok:${lombokVersion}"
     annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.2'
+    implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.18.3'
 
     implementation "dev.langchain4j:langchain4j:${langchain4jVersion}"
     implementation "dev.langchain4j:langchain4j-open-ai:${langchain4jVersion}"
     implementation "dev.langchain4j:langchain4j-anthropic:${langchain4jVersion}"
     implementation "dev.langchain4j:langchain4j-google-ai-gemini:${langchain4jVersion}"
 
-
-    // Logging
-    implementation 'org.apache.logging.log4j:log4j-api:2.20.0'
-    implementation 'org.apache.logging.log4j:log4j-core:2.20.0'
-
-    // Testing dependencies
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.2'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.2'
-    testImplementation 'org.junit.jupiter:junit-jupiter-params:5.9.2'
-    // testImplementation 'org.mockito:mockito-core:5.3.1'
-
     implementation 'org.springframework:spring-web:6.2.5'
     implementation 'gg.jte:jte:3.2.0'
 
-    implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.18.3'
+    implementation 'io.github.cdimascio:dotenv-java:3.2.0'
 
-        testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-
-
+    testImplementation "org.junit.jupiter:junit-jupiter-api:${junitVersion}"
+    testImplementation "org.junit.jupiter:junit-jupiter-params:${junitVersion}"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${junitVersion}"
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.12.1'
 }
 
 test {
@@ -78,38 +75,3 @@ tasks.named('test') {
 }
 
 
-
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            from components.java
-
-            pom {
-                name = 'Java LLM Toolkit'
-                description = 'A Java framework for structured LLM interactions'
-                url = 'https://github.com/yourusername/java-llm-toolkit'
-
-                licenses {
-                    license {
-                        name = 'The Apache License, Version 2.0'
-                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                    }
-                }
-
-                developers {
-                    developer {
-                        id = 'yourusername'
-                        name = 'Your Name'
-                        email = 'your.email@example.com'
-                    }
-                }
-
-                scm {
-                    connection = 'scm:git:git://github.com/yourusername/java-llm-toolkit.git'
-                    developerConnection = 'scm:git:ssh://github.com/yourusername/java-llm-toolkit.git'
-                    url = 'https://github.com/yourusername/java-llm-toolkit'
-                }
-            }
-        }
-    }
-}

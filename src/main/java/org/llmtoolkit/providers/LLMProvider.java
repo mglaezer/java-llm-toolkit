@@ -1,6 +1,6 @@
-package org.llmtoolkit.llm.providers;
+package org.llmtoolkit.providers;
 
-import org.llmtoolkit.llm.LLM;
+import org.llmtoolkit.core.LLM;
 
 public interface LLMProvider {
     String answer(String input, LLM llm);

@@ -1,4 +1,4 @@
-package org.llmtoolkit.llm;
+package org.llmtoolkit.util;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
@@ -213,6 +213,7 @@ public class ClassToString {
     private static String formatAnnotation(Annotation annotation) {
         String annotationClassName = annotation.annotationType().getSimpleName();
         Method[] methods = annotation.annotationType().getDeclaredMethods();
+
         if (methods.length == 0) {
             return "@" + annotationClassName;
         }
@@ -220,45 +221,43 @@ public class ClassToString {
         StringBuilder sb = new StringBuilder("@").append(annotationClassName);
 
         try {
-            // Check if there are any non-default values
-            boolean hasNonDefaultValues = false;
+            // Sort methods to ensure consistent ordering
+            methods = methods.clone();
+            Arrays.sort(methods, (a, b) -> {
+                // Put "value" first, then sort alphabetically
+                if (a.getName().equals(VALUE_METHOD)) return -1;
+                if (b.getName().equals(VALUE_METHOD)) return 1;
+                return a.getName().compareTo(b.getName());
+            });
+
+            Map<String, Object> nonDefaultValues = new LinkedHashMap<>();
             for (Method method : methods) {
+                method.setAccessible(true);
                 Object value = method.invoke(annotation);
                 Object defaultValue = method.getDefaultValue();
-
-                // Only include if value is not null and different from default
                 if (value != null && (!value.equals(defaultValue))) {
-                    hasNonDefaultValues = true;
-                    break;
+                    nonDefaultValues.put(method.getName(), value);
                 }
             }
 
-            // If no non-default values, return just the annotation name
-            if (!hasNonDefaultValues) {
-                return "@" + annotationClassName;
-            }
-
-            sb.append("(");
-            boolean first = true;
-            for (Method method : methods) {
-                Object value = method.invoke(annotation);
-                Object defaultValue = method.getDefaultValue();
-
-                // Only include if value is not null and different from default
-                if (value != null && (!value.equals(defaultValue))) {
-                    if (!first) {
-                        sb.append(", ");
+            if (!nonDefaultValues.isEmpty()) {
+                sb.append("(");
+                if (nonDefaultValues.size() == 1 && nonDefaultValues.containsKey(VALUE_METHOD)) {
+                    // If "value" is the only parameter, just print its value without the name
+                    sb.append(formatAnnotationValue(nonDefaultValues.get(VALUE_METHOD)));
+                } else {
+                    // Print all parameters with their names
+                    boolean first = true;
+                    for (Map.Entry<String, Object> entry : nonDefaultValues.entrySet()) {
+                        if (!first) {
+                            sb.append(", ");
+                        }
+                        sb.append(entry.getKey()).append(" = ").append(formatAnnotationValue(entry.getValue()));
+                        first = false;
                     }
-                    // For single-value annotations with 'value' method, omit the name
-                    if (methods.length == 1 && method.getName().equals(VALUE_METHOD)) {
-                        sb.append(formatAnnotationValue(value));
-                    } else {
-                        sb.append(method.getName()).append(" = ").append(formatAnnotationValue(value));
-                    }
-                    first = false;
                 }
+                sb.append(")");
             }
-            sb.append(")");
         } catch (Exception e) {
             return "@" + annotationClassName;
         }
@@ -540,6 +539,12 @@ public class ClassToString {
     }
 
     private static String formatParameter(Parameter param, boolean qualifyNestedClassNames) {
+        if (!param.isNamePresent()) {
+            throw new UnsupportedOperationException("Parameter names are not present in "
+                    + param.getDeclaringExecutable().getDeclaringClass().getName()
+                    + ". Please compile with '-parameters' flag or use Java 21+");
+        }
+
         StringBuilder sb = new StringBuilder();
 
         // Get all annotations including type annotations

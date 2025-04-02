@@ -1,4 +1,4 @@
-package org.llmtoolkit.llm;
+package org.llmtoolkit.core.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -6,7 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.FIELD, ElementType.TYPE})
-public @interface Cue {
-    String value();
+@Target(ElementType.METHOD)
+public @interface PT {
+    String templatePath();
 }

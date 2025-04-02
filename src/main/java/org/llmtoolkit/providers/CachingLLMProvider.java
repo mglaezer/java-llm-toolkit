@@ -1,9 +1,9 @@
-package org.llmtoolkit.llm.providers;
+package org.llmtoolkit.providers;
 
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import java.util.concurrent.ConcurrentHashMap;
-import org.llmtoolkit.llm.LLM;
-import org.llmtoolkit.llm.providers.chatmodel.ChatModelProvider;
+import org.llmtoolkit.core.LLM;
+import org.llmtoolkit.providers.chatmodel.ChatModelProvider;
 
 public class CachingLLMProvider implements LLMProvider {
 

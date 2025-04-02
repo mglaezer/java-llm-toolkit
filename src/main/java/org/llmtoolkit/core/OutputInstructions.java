@@ -1,4 +1,7 @@
-package org.llmtoolkit.llm;
+package org.llmtoolkit.core;
+
+import org.llmtoolkit.core.annotations.Cue;
+import org.llmtoolkit.util.ClassToString;
 
 public class OutputInstructions {
 

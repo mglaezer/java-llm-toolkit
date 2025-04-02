@@ -1,4 +1,4 @@
-package org.llmtoolkit.llm.providers;
+package org.llmtoolkit.providers;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
