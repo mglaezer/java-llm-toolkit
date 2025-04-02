@@ -81,3 +81,10 @@ tasks.named('javadoc') {
 }
 
 
+publishing {
+    publications {
+        maven(MavenPublication) {
+		from components.java
+        }
+    }
+}
