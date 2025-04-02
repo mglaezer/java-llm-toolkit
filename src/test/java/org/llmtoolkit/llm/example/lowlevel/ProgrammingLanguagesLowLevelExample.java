@@ -1,7 +1,7 @@
 package org.llmtoolkit.llm.example.lowlevel;
 
-import org.llmtoolkit.llm.LLM;
-import org.llmtoolkit.llm.OutputInstructions;
+import org.llmtoolkit.core.LLM;
+import org.llmtoolkit.core.OutputInstructions;
 import org.llmtoolkit.llm.example.template.ProgrammingLanguagesPrompt.Languages;
 import org.llmtoolkit.util.json.SerObject;
 

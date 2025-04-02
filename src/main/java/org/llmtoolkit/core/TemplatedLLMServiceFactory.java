@@ -1,4 +1,4 @@
-package org.llmtoolkit.llm;
+package org.llmtoolkit.core;
 
 import gg.jte.CodeResolver;
 import gg.jte.ContentType;
@@ -7,6 +7,8 @@ import gg.jte.output.StringOutput;
 import java.lang.reflect.*;
 import java.util.*;
 import java.util.function.Supplier;
+import org.llmtoolkit.core.annotations.PP;
+import org.llmtoolkit.core.annotations.PT;
 import org.llmtoolkit.util.Do;
 import org.llmtoolkit.util.json.JsonUtils;
 

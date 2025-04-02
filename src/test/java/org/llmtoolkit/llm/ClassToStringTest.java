@@ -131,7 +131,7 @@ class ClassToStringTest {
     @Test
     void testSimpleRecord() {
         String result = ClassToString.toString(SimpleRecord.class, false, false);
-        assertTrue(result.contains("@TestAnnotation(value = \"test\")"));
+        assertTrue(result.contains("@TestAnnotation(\"test\")"));
         assertTrue(result.contains("record SimpleRecord("));
         assertTrue(result.contains("String name"));
         assertTrue(result.contains("int value"));
@@ -257,7 +257,7 @@ class ClassToStringTest {
     @Test
     void testSimpleClass() {
         String result = ClassToString.toString(SimpleClass.class, true, false);
-        assertTrue(result.contains("@TestAnnotation(value = \"test\")"));
+        assertTrue(result.contains("@TestAnnotation(\"test\")"));
         assertTrue(result.contains("class SimpleClass"));
         assertTrue(result.contains("public String getName()"));
     }
@@ -266,7 +266,7 @@ class ClassToStringTest {
     void testGenericClass() {
         String result = ClassToString.toString(GenericClass.class, true, false);
         assertTrue(result.contains("class GenericClass<T>"));
-        assertTrue(result.contains("@TestAnnotation(value = \"process\")"));
+        assertTrue(result.contains("@TestAnnotation(\"process\")"));
         assertTrue(result.contains("public List<T> processData("));
         assertTrue(result.contains("@SimpleAnnotation T input"));
     }
@@ -294,7 +294,7 @@ class ClassToStringTest {
     void testClassWithStaticMethods() {
         String result = ClassToString.toString(ClassWithStaticMethods.class, true, false);
         assertTrue(result.contains("class ClassWithStaticMethods"));
-        assertTrue(result.contains("@TestAnnotation(value = \"factory\")"));
+        assertTrue(result.contains("@TestAnnotation(\"factory\")"));
         assertTrue(result.contains("public static ClassWithStaticMethods create(String value)"));
         assertTrue(result.contains("public static void staticHelper(@SimpleAnnotation String input)"));
         assertTrue(result.contains("public void instanceMethod()"));
@@ -311,7 +311,7 @@ class ClassToStringTest {
     void testClassWithConstructors() {
         String result = ClassToString.toString(ClassWithConstructors.class, true, false);
         assertTrue(result.contains("class ClassWithConstructors"));
-        assertTrue(result.contains("@TestAnnotation(value = \"constructor\")"));
+        assertTrue(result.contains("@TestAnnotation(\"constructor\")"));
         assertTrue(result.contains("public ClassWithConstructors(@SimpleAnnotation String name, int value)"));
         assertTrue(result.contains("protected ClassWithConstructors()"));
     }
@@ -324,7 +324,7 @@ class ClassToStringTest {
         assertTrue(result.contains("@InheritedAnn(\"child\")"));
 
         // Constructor annotations
-        assertTrue(result.contains("@TestAnnotation(value = \"constructor\")"));
+        assertTrue(result.contains("@TestAnnotation(\"constructor\")"));
         assertTrue(result.contains("@InheritedAnn(\"constructor\")"));
 
         // Constructor parameter annotations
@@ -332,7 +332,7 @@ class ClassToStringTest {
 
         // Method annotations (including inherited and override)
         assertTrue(result.contains("@Override"));
-        assertTrue(result.contains("@TestAnnotation(value = \"method\")"));
+        assertTrue(result.contains("@TestAnnotation(\"method\")"));
         assertTrue(result.contains("@InheritedAnn(\"method\")"));
 
         // Method parameter annotations

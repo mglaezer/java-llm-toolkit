@@ -1,9 +1,9 @@
-package org.llmtoolkit.llm.providers.chatmodel;
+package org.llmtoolkit.providers.chatmodel;
 
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.googleai.GoogleAiGeminiChatModel;
 import java.time.Duration;
-import org.llmtoolkit.llm.LLM;
+import org.llmtoolkit.core.LLM;
 import org.llmtoolkit.util.Env;
 
 public class GoogleChatModelProvider implements ChatModelProvider {
