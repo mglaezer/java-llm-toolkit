@@ -42,6 +42,9 @@ This project is licensed under the Apache License 2.0.
 - Java 17 or higher
 
 ### Compiler Settings
+
+> **Note**: This requirement is automatically satisfied in Java 21+ without additional configuration.
+
 When using Java 17-20, you need to compile your code with parameter names retained:
 
 #### Gradle
@@ -62,4 +65,4 @@ tasks.withType(JavaCompile) {
 </plugin>
 ```
 
-> **Note**: This requirement is automatically satisfied in Java 21+ without additional configuration.
+
