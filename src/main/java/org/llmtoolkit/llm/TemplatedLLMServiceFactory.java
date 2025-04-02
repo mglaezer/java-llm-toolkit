@@ -1,12 +1,10 @@
 package org.llmtoolkit.llm;
 
+import gg.jte.CodeResolver;
 import gg.jte.ContentType;
 import gg.jte.TemplateEngine;
 import gg.jte.output.StringOutput;
-import gg.jte.resolve.DirectoryCodeResolver;
 import java.lang.reflect.*;
-import java.net.URL;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Supplier;
 import org.llmtoolkit.util.Do;
@@ -19,16 +17,15 @@ public class TemplatedLLMServiceFactory {
     private final boolean isToPrintAnswer;
     private final TemplateEngine templateEngine;
 
-    public TemplatedLLMServiceFactory(StringAnswer stringAnswer) {
-        this(stringAnswer, false, false);
+    public TemplatedLLMServiceFactory(StringAnswer stringAnswer, CodeResolver codeResolver) {
+        this(stringAnswer, false, false, codeResolver);
     }
 
-    public TemplatedLLMServiceFactory(StringAnswer stringAnswer, boolean printPrompt, boolean printAnswer) {
+    public TemplatedLLMServiceFactory(
+            StringAnswer stringAnswer, boolean printPrompt, boolean printAnswer, CodeResolver codeResolver) {
         this.stringAnswer = stringAnswer;
         this.isToPrintPrompt = printPrompt;
         this.isToPrintAnswer = printAnswer;
-        Path sourcePath = detectSourcePath();
-        DirectoryCodeResolver codeResolver = new DirectoryCodeResolver(sourcePath);
         this.templateEngine = TemplateEngine.create(codeResolver, ContentType.Plain);
     }
 
@@ -172,30 +169,5 @@ public class TemplatedLLMServiceFactory {
             }
             throw new IllegalArgumentException(err.toString());
         }
-    }
-
-    private Path detectSourcePath() {
-        URL location = TemplatedLLMServiceFactory.class
-                .getProtectionDomain()
-                .getCodeSource()
-                .getLocation();
-        String path = location.getPath();
-
-        if (path.endsWith(".jar")) {
-            return Path.of("/templates"); // In production, templates should be in a known location
-        }
-
-        // Development mode - templates are next to source files
-        Path sourcePath = Path.of(path);
-        while (sourcePath != null
-                && !Path.of(sourcePath.toString(), "build.gradle").toFile().exists()) {
-            sourcePath = sourcePath.getParent();
-        }
-
-        if (sourcePath == null) {
-            throw new IllegalStateException("Could not find project root (build.gradle)");
-        }
-
-        return Path.of(sourcePath.toString(), "src", "main", "java");
     }
 }
