@@ -29,8 +29,8 @@ tasks.named('compileJava') {
 }
 
 
-group = 'org.llmtoolkit'
-version = '0.1.0'
+group = 'com.github.mglaezer'
+version = '0.1.1'
 
 repositories {
     mavenCentral()
@@ -72,6 +72,12 @@ test {
 
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+tasks.named('javadoc') {
+    options.addStringOption('Xdoclint:none', '-quiet')
+    // If you still want some checks but not all, use something like:
+    // options.addStringOption('Xdoclint:-missing', '-quiet')
 }
 
 
