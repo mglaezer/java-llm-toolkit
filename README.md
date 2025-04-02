@@ -8,6 +8,8 @@
 
 ## Installation
 
+[![](https://jitpack.io/v/mglaezer/java-llm-toolkit.svg)](https://jitpack.io/#mglaezer/java-llm-toolkit)
+
 ### Gradle
 
 ```gradle
