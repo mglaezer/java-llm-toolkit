@@ -36,7 +36,7 @@ This project is licensed under the Apache License 2.0.
 
 When using Java 17-20,  might get "Parameter names are not present in ... Please compile with '-parameters' flag or use Java 21+" exception.
 
-If that happense, you need to compile your code with parameter names retained:
+If that happens, you need to compile your code with parameter names retained:
 
 #### Gradle
 ```groovy
