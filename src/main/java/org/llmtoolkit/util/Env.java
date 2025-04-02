@@ -7,7 +7,8 @@ import org.springframework.util.StringUtils;
 @Slf4j
 public class Env {
 
-    private static final Dotenv dotenv = Dotenv.load();
+    private static final Dotenv dotenv =
+            Dotenv.configure().ignoreIfMissing().systemProperties().load();
 
     public static String getRequired(String name) {
 
