@@ -8,23 +8,10 @@
 
 ## Installation
 
+Follow these instructions on JitPack:
+
 [![](https://jitpack.io/v/mglaezer/java-llm-toolkit.svg)](https://jitpack.io/#mglaezer/java-llm-toolkit)
 
-### Gradle
-
-```gradle
-implementation 'org.llmtoolkit:java-llm-toolkit:0.1.0'
-```
-
-### Maven
-
-```xml
-<dependency>
-    <groupId>org.llmtoolkit</groupId>
-    <artifactId>llmtoolkit-java</artifactId>
-    <version>0.1.0</version>
-</dependency>
-```
 
 ## Quick Start
 
