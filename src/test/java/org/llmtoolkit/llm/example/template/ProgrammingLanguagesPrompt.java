@@ -16,7 +16,7 @@ public interface ProgrammingLanguagesPrompt {
 
     CodeResolver templatesRoot = new DirectoryCodeResolver(Path.of("src/test/java"));
 
-    ChooseFrom SOME_CRAP = new ChooseFrom(
+    ChooseFrom CHOOSE_FROM = new ChooseFrom(
             "glorious", List.of("Java", "JavaScript", "Python", "Ruby", "Go", "Rust", "C++", "C#", "Scala", "Fortran"));
 
     record ChooseFrom(String adjective, List<String> options) {}
@@ -59,7 +59,7 @@ public interface ProgrammingLanguagesPrompt {
 
         ProgrammingLanguagesPrompt service = new TemplatedLLMServiceFactory(LLM.GEMINI_2_0_FLASH, templatesRoot)
                 .create(ProgrammingLanguagesPrompt.class);
-        var languages = service.getBestLanguagesAsString(2, 2, SOME_CRAP);
+        var languages = service.getBestLanguagesAsString(2, 2, CHOOSE_FROM);
         System.out.println("languages as String = \n" + languages);
     }
 
@@ -76,7 +76,7 @@ public interface ProgrammingLanguagesPrompt {
         ProgrammingLanguagesPrompt service =
                 new TemplatedLLMServiceFactory(stringAnswer, templatesRoot).create(ProgrammingLanguagesPrompt.class);
 
-        Languages languages = service.getBestLanguagesAsObject(2, 2, SOME_CRAP);
+        Languages languages = service.getBestLanguagesAsObject(2, 2, CHOOSE_FROM);
         System.out.println(
                 "languages as Object = \n" + SerObject.from(languages).toYaml());
     }
@@ -94,7 +94,7 @@ public interface ProgrammingLanguagesPrompt {
         ProgrammingLanguagesPrompt service =
                 new TemplatedLLMServiceFactory(stringAnswer, templatesRoot).create(ProgrammingLanguagesPrompt.class);
 
-        List<Languages.Language> languages = service.getBestLanguagesAsList(2, 2, SOME_CRAP);
+        List<Languages.Language> languages = service.getBestLanguagesAsList(2, 2, CHOOSE_FROM);
         System.out.println("languages as List = \n"
                 + SerArray.from(languages, Languages.Language.class).toYaml());
     }
@@ -102,7 +102,7 @@ public interface ProgrammingLanguagesPrompt {
     private static void demoLLMObject() {
         ProgrammingLanguagesPrompt service = new TemplatedLLMServiceFactory(LLM.GEMINI_2_0_FLASH, templatesRoot)
                 .create(ProgrammingLanguagesPrompt.class);
-        Languages languages = service.getBestLanguagesAsObject(2, 2, SOME_CRAP);
+        Languages languages = service.getBestLanguagesAsObject(2, 2, CHOOSE_FROM);
         System.out.println(
                 "languages as Object = \n" + SerObject.from(languages).toYaml());
     }
@@ -110,7 +110,7 @@ public interface ProgrammingLanguagesPrompt {
     private static void demoLLMList() {
         ProgrammingLanguagesPrompt service = new TemplatedLLMServiceFactory(LLM.GEMINI_2_0_FLASH, templatesRoot)
                 .create(ProgrammingLanguagesPrompt.class);
-        List<Languages.Language> languages = service.getBestLanguagesAsList(2, 2, SOME_CRAP);
+        List<Languages.Language> languages = service.getBestLanguagesAsList(2, 2, CHOOSE_FROM);
         System.out.println("languages as List = \n"
                 + SerArray.from(languages, Languages.Language.class).toYaml());
     }
