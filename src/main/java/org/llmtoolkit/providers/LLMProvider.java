@@ -1,7 +1,7 @@
 package org.llmtoolkit.providers;
 
-import org.llmtoolkit.core.LLM;
+import org.llmtoolkit.core.BasicLLM;
 
 public interface LLMProvider {
-    String answer(String input, LLM llm);
+    String answer(String input, BasicLLM llm);
 }

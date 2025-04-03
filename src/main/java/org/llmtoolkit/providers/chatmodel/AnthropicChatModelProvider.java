@@ -3,7 +3,7 @@ package org.llmtoolkit.providers.chatmodel;
 import dev.langchain4j.model.anthropic.AnthropicChatModel;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import java.time.Duration;
-import org.llmtoolkit.core.LLM;
+import org.llmtoolkit.core.BasicLLM;
 import org.llmtoolkit.util.Env;
 
 public class AnthropicChatModelProvider implements ChatModelProvider {
@@ -15,8 +15,8 @@ public class AnthropicChatModelProvider implements ChatModelProvider {
     }
 
     @Override
-    public ChatLanguageModel createChatModel(LLM llm) {
-        if (llm.reasoningEffort() != null) {
+    public ChatLanguageModel createChatModel(BasicLLM llm) {
+        if (llm.getReasoningEffort() != null) {
             throw new RuntimeException(
                     "Reasoning effort is not supported for Anthropic thinking mode, use thinking tokens instead");
         }
@@ -24,26 +24,26 @@ public class AnthropicChatModelProvider implements ChatModelProvider {
         if (apiKey == null) apiKey = Env.getRequired("ANTHROPIC_API_KEY");
 
         AnthropicChatModel.AnthropicChatModelBuilder builder =
-                AnthropicChatModel.builder().modelName(llm.model()).apiKey(apiKey);
+                AnthropicChatModel.builder().modelName(llm.getModel()).apiKey(apiKey);
 
-        if (llm.thinking() && (llm.thinkingTokens() == null || llm.maxTokens() == null)) {
+        if (llm.isThinking() && (llm.getThinkingTokens() == null || llm.getMaxTokens() == null)) {
             throw new RuntimeException("Max tokens and thinking tokens must be set for thinking mode");
         }
 
-        if (llm.thinkingTokens() != null && !llm.thinking()) {
+        if (llm.getThinkingTokens() != null && !llm.isThinking()) {
             throw new RuntimeException("Thinking tokens can only be set for thinking mode");
         }
 
-        if (llm.thinking() && llm.maxTokens() <= llm.thinkingTokens()) {
+        if (llm.isThinking() && llm.getMaxTokens() <= llm.getThinkingTokens()) {
             throw new RuntimeException("Max tokens must be greater than thinking tokens");
         }
 
-        if (llm.thinking()) builder.thinkingType("enabled");
-        if (llm.maxTokens() != null) builder.maxTokens(llm.maxTokens());
-        if (llm.thinkingTokens() != null) builder.thinkingBudgetTokens(llm.thinkingTokens());
-        if (llm.timeout() != null) builder.timeout(Duration.ofSeconds(llm.timeout()));
-        if (llm.temperature() != null) builder.temperature(llm.temperature());
-        if (llm.topP() != null) builder.topP(llm.topP());
+        if (llm.isThinking()) builder.thinkingType("enabled");
+        if (llm.getMaxTokens() != null) builder.maxTokens(llm.getMaxTokens());
+        if (llm.getThinkingTokens() != null) builder.thinkingBudgetTokens(llm.getThinkingTokens());
+        if (llm.getTimeout() != null) builder.timeout(Duration.ofSeconds(llm.getTimeout()));
+        if (llm.getTemperature() != null) builder.temperature(llm.getTemperature());
+        if (llm.getTopP() != null) builder.topP(llm.getTopP());
 
         return builder.build();
     }

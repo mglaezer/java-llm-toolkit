@@ -30,7 +30,7 @@ tasks.named('compileJava') {
 
 
 group = 'com.github.mglaezer'
-version = '0.1.1'
+version = '0.1.6'
 
 repositories {
     mavenCentral()
@@ -77,8 +77,6 @@ tasks.named('test') {
 
 tasks.named('javadoc') {
     options.addStringOption('Xdoclint:none', '-quiet')
-    // If you still want some checks but not all, use something like:
-    // options.addStringOption('Xdoclint:-missing', '-quiet')
 }
 
 

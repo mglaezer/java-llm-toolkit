@@ -3,7 +3,7 @@ package org.llmtoolkit.providers.chatmodel;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.googleai.GoogleAiGeminiChatModel;
 import java.time.Duration;
-import org.llmtoolkit.core.LLM;
+import org.llmtoolkit.core.BasicLLM;
 import org.llmtoolkit.util.Env;
 
 public class GoogleChatModelProvider implements ChatModelProvider {
@@ -15,25 +15,25 @@ public class GoogleChatModelProvider implements ChatModelProvider {
     }
 
     @Override
-    public ChatLanguageModel createChatModel(LLM llm) {
+    public ChatLanguageModel createChatModel(BasicLLM llm) {
 
-        if (llm.thinkingTokens() != null) {
+        if (llm.getThinkingTokens() != null) {
             throw new UnsupportedOperationException("Google does not support specifying thinking tokens");
         }
 
-        if (llm.reasoningEffort() != null) {
+        if (llm.getReasoningEffort() != null) {
             throw new UnsupportedOperationException("Google does not support specifying reasoning effort");
         }
 
         if (apiKey == null) apiKey = Env.getRequired("GEMINI_API_KEY");
 
         GoogleAiGeminiChatModel.GoogleAiGeminiChatModelBuilder builder =
-                GoogleAiGeminiChatModel.builder().modelName(llm.model()).apiKey(apiKey);
+                GoogleAiGeminiChatModel.builder().modelName(llm.getModel()).apiKey(apiKey);
 
-        if (llm.timeout() != null) builder.timeout(Duration.ofSeconds(llm.timeout()));
-        if (llm.temperature() != null) builder.temperature(llm.temperature());
-        if (llm.topP() != null) builder.topP(llm.topP());
-        if (llm.maxTokens() != null) builder.maxOutputTokens(llm.maxTokens());
+        if (llm.getTimeout() != null) builder.timeout(Duration.ofSeconds(llm.getTimeout()));
+        if (llm.getTemperature() != null) builder.temperature(llm.getTemperature());
+        if (llm.getTopP() != null) builder.topP(llm.getTopP());
+        if (llm.getMaxTokens() != null) builder.maxOutputTokens(llm.getMaxTokens());
 
         return builder.build();
     }
