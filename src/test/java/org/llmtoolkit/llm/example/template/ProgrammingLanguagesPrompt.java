@@ -7,7 +7,7 @@ import gg.jte.CodeResolver;
 import gg.jte.resolve.DirectoryCodeResolver;
 import java.nio.file.Path;
 import java.util.List;
-import org.llmtoolkit.core.BasicLLM;
+import org.llmtoolkit.core.CommonLLMs;
 import org.llmtoolkit.core.StringAnswer;
 import org.llmtoolkit.core.TemplatedLLMServiceFactory;
 import org.llmtoolkit.core.annotations.Cue;
@@ -63,7 +63,7 @@ public interface ProgrammingLanguagesPrompt {
     private static void demoLLMString() {
 
         ProgrammingLanguagesPrompt service = new TemplatedLLMServiceFactory(
-                        BasicLLM.GEMINI_2_0_FLASH.get(), templatesRoot)
+                        CommonLLMs.GEMINI_2_0_FLASH.get(), templatesRoot)
                 .create(ProgrammingLanguagesPrompt.class);
         var languages = service.getBestLanguagesAsString(2, 2, CHOOSE_FROM);
         System.out.println("languages as String = \n" + languages);
@@ -72,7 +72,7 @@ public interface ProgrammingLanguagesPrompt {
     private static void demoAiServicesObject() {
         GoogleAiGeminiChatModel model = GoogleAiGeminiChatModel.builder()
                 .apiKey(Env.getRequired("GEMINI_API_KEY"))
-                .modelName(BasicLLM.GEMINI_2_0_FLASH.get().getModel())
+                .modelName(CommonLLMs.GEMINI_2_0_FLASH.get().getModel())
                 .temperature(0.5)
                 .build();
 
@@ -90,7 +90,7 @@ public interface ProgrammingLanguagesPrompt {
     private static void demoAiServicesList() {
         OpenAiChatModel model = OpenAiChatModel.builder()
                 .apiKey(Env.getRequired("OPENAI_API_KEY"))
-                .modelName(BasicLLM.GPT_4o.get().getModel())
+                .modelName(CommonLLMs.GPT_4o.get().getModel())
                 .maxTokens(2000)
                 .build();
 
@@ -107,7 +107,7 @@ public interface ProgrammingLanguagesPrompt {
 
     private static void demoLLMObject() {
         ProgrammingLanguagesPrompt service = new TemplatedLLMServiceFactory(
-                        BasicLLM.GEMINI_2_0_FLASH.get(), templatesRoot)
+                        CommonLLMs.GEMINI_2_0_FLASH.get(), templatesRoot)
                 .create(ProgrammingLanguagesPrompt.class);
         Languages languages = service.getBestLanguagesAsObject(2, 2, CHOOSE_FROM);
         System.out.println(
@@ -116,7 +116,7 @@ public interface ProgrammingLanguagesPrompt {
 
     private static void demoLLMList() {
         ProgrammingLanguagesPrompt service = new TemplatedLLMServiceFactory(
-                        BasicLLM.GEMINI_2_0_FLASH.get(), templatesRoot)
+                        CommonLLMs.GEMINI_2_0_FLASH.get(), templatesRoot)
                 .create(ProgrammingLanguagesPrompt.class);
         List<Languages.Language> languages = service.getBestLanguagesAsList(2, 2, CHOOSE_FROM);
         System.out.println("languages as List = \n"
