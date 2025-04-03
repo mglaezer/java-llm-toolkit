@@ -1,7 +1,10 @@
 package org.llmtoolkit.core;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NonNull;
 import org.llmtoolkit.providers.LLMProvider;
 
 @Getter
@@ -16,6 +19,22 @@ public class BasicLLM implements StringAnswer {
     private final Integer maxTokens;
     private final Integer thinkingTokens;
     private final Integer timeout;
+
+    public static Supplier<@NonNull BasicLLM> of(String model, LLMProvider provider) {
+        return Suppliers.memoize(() -> BasicLLM.builder()
+                .model(model)
+                .provider(provider)
+                .thinking(false)
+                .build());
+    }
+
+    public static Supplier<@NonNull BasicLLM> of(String model, LLMProvider provider, boolean thinking) {
+        return Suppliers.memoize(() -> BasicLLM.builder()
+                .model(model)
+                .provider(provider)
+                .thinking(thinking)
+                .build());
+    }
 
     @Getter
     public enum ReasoningEffort {
