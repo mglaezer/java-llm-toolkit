@@ -546,7 +546,7 @@ public class ClassToString {
             throw new UnsupportedOperationException("Parameter names are not present in "
                     + param.getDeclaringExecutable().getDeclaringClass().getName()
                     + ". Please compile with '-parameters' flag or use Java 21+ "
-                    + "(https://github.com/mglaezer/java-llm-toolkit/tree/main?tab=readme-ov-file#compiler-settings)");
+                    + "(see #compiler-settings in README.md)");
         }
 
         StringBuilder sb = new StringBuilder();

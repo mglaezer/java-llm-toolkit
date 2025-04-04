@@ -10,7 +10,7 @@ Works standalone or integrates with LangChain4j for features like RAG, tools and
 
 ### JTE (Java Template Engine) based Prompt composition
 
-The toolkit provides a comprehensive templating system that goes beyond basic string templates:
+The toolkit provides an integration with JTE, a comprehensive templating system that goes beyond basic string templates:
 
 - **[JTE (Java Template Engine)](https://github.com/casid/jte) Integration**:
   - JTE supports complex template composition with includes, loops, and conditionals
@@ -21,11 +21,11 @@ The toolkit provides a comprehensive templating system that goes beyond basic st
   
 ### Structured Output Handling
 
-The toolkit transforms Java code structure directly into LLM output instructions:
+The toolkit uses reflection to transform Java code structure directly into LLM output instructions through Java bean definitions (rather than JSON Schema):
 
 - **Java Record-based Output Format**:
   - Uses Java bean definitions as LLM output instructions
-  - Leverages annotations to provide additional semantic context to LLMs
+  - Leverages **annotations to provide additional semantic context to LLMs**
   - LLMs tend to produce better results with annotated Java beans used in output instructions compared to JSON Schema or examples approach
 
 ### JSON and YAML Processing
@@ -60,7 +60,8 @@ See [examples](src/test/java/org/llmtoolkit/examples) for common usage patterns 
 
 Follow these instructions on JitPack:
 
-[![](https://jitpack.io/v/mglaezer/java-llm-toolkit.svg)](https://jitpack.io/#mglaezer/java-llm-toolkit)
+[![](https://jitpack.io/v/org.java-llm-toolkit/java-llm-toolkit.svg)](https://jitpack.io/#org.java-llm-toolkit/java-llm-toolkit)
+
 
 ## Contributing
 
