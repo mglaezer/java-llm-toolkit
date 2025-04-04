@@ -17,6 +17,14 @@ import org.llmtoolkit.util.Env;
 import org.llmtoolkit.util.json.SerArray;
 import org.llmtoolkit.util.json.SerObject;
 
+/*
+ * Examples below demonstrate two approaches to LLM interaction, both using JTE templates:
+ *
+ * 1. Basic approach with BasicLLM usage.
+ * 2. Integration with langchain4j:
+ *    - Uses langchain4j's chat model construction instead of BasicLLM class
+ *    - Enables additional features like Memory, RAG, Tools
+ */
 public class TemplatedPromptExamples {
 
     private static final CodeResolver TEMPLATES_ROOT = new DirectoryCodeResolver(Path.of("src/test/java"));
