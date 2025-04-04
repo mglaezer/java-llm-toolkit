@@ -5,16 +5,17 @@
 
 ## Introduction
 
-A Java toolkit that simplifies working with Large Language Models through powerful templating, structured outputs, and robust JSON/YAML handling. Works standalone or integrates with LangChain4j for advanced features like RAG and memory.
+A Java toolkit that simplifies working with Large Language Models through powerful templating, structured outputs, and robust JSON/YAML handling. 
+Works standalone or integrates with LangChain4j for features like RAG, tools and memory.
 
 ### JTE (Java Template Engine) based Prompt composition
 
 The toolkit provides a comprehensive templating system that goes beyond basic string templates:
 
 - **[JTE (Java Template Engine)](https://github.com/casid/jte) Integration**:
-  - Supports complex template composition with includes, loops, and conditionals
-  - Provides IDE-assisted validation of template parameters
-  - Stores templates as `.jte` files alongside Java code
+  - JTE supports complex template composition with includes, loops, and conditionals
+  - IDE plugins provide validation of template parameters
+  - Templates are stored as `.jte` files alongside Java code or in the resource folder
   - Uses annotation-based binding of method parameters to template variables
   - Enforces strict validation of parameter-to-template mapping
   
@@ -24,10 +25,8 @@ The toolkit transforms Java code structure directly into LLM output instructions
 
 - **Java Record-based Output Format**:
   - Uses Java bean definitions as LLM output instructions
-  - Generates format specifications from Java record structure
   - Leverages annotations to provide additional semantic context to LLMs
-  - Offers better accuracy compared to JSON Schema approach
-  - Supports field-level output validation and repair
+  - LLMs tend to produce better results with annotated Java beans used in output instructions compared to JSON Schema or examples approach
 
 ### JSON and YAML Processing
 
@@ -36,9 +35,8 @@ Robust handling of LLM responses with automatic repair capabilities:
 - **Smart Parser and Repair**:
   - Handles malformed JSON from various LLM providers
   - Fixes syntax issues like missing commas, unmatched parentheses, and incomplete JSON structures
-  - Removes markdown artifacts and formatting inconsistencies
-  - Provides clean conversion between JSON, YAML, and Java objects
-  - Includes validation to ensure parsing consistency
+  - Removes markdown artifacts
+  - Provides convenient abstractions for conversion between JSON, YAML, and Java objects
 
 ### LangChain4j Integration
 
@@ -47,9 +45,7 @@ Optional integration with LangChain4j ecosystem:
 - **Flexible Usage**:
   - Works as standalone toolkit or LangChain4j extension
   - Supports LangChain4j chat models
-  - Enables RAG (Retrieval Augmented Generation)
-  - Provides access to conversation memory
-  - Integrates with LangChain4j tools
+  - Enables LangChain4j features like RAG (Retrieval Augmented Generation), memory, and tools
 
 
 ## Quick Start
