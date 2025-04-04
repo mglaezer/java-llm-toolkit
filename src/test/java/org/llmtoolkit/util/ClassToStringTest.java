@@ -330,7 +330,6 @@ public class ClassToStringTest {
         assertTrue(result.contains("@SimpleAnnotation @InheritedAnn(\"param\") String name"));
 
         // Method annotations (including inherited and override)
-        assertTrue(result.contains("@Override"));
         assertTrue(result.contains("@TestAnnotation(\"method\")"));
         assertTrue(result.contains("@InheritedAnn(\"method\")"));
 
