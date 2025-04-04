@@ -1,5 +1,12 @@
 package org.llmtoolkit.util.json;
 
+/**
+ * Serializes objects to/from JSON and YAML with format validation.
+ * Ensures round-trip consistency by verifying that re-parsing the serialized output
+ * produces identical results.
+ *
+ * @param <T> type of the wrapped object
+ */
 public class SerObject<T> {
     static final int DEFAULT_YAML_WIDTH = 120;
 
