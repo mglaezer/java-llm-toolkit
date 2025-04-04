@@ -5,6 +5,9 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Cue for the LLM to follow regarding the annotated element.
+ */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({
     ElementType.ANNOTATION_TYPE,

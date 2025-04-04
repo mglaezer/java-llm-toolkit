@@ -16,7 +16,9 @@ public class CommonLLMs {
     public static final Supplier<@NonNull BasicLLM> GPT_4_5_PREVIEW =
             BasicLLM.of("gpt-4.5-preview", OPENAI.get(), true);
 
-    public static final Supplier<@NonNull BasicLLM> GPT_4o = BasicLLM.of("chatgpt-4o-latest", OPENAI.get());
+    public static final Supplier<@NonNull BasicLLM> GPT_4o = BasicLLM.of("gpt-4o", OPENAI.get());
+
+    public static final Supplier<@NonNull BasicLLM> GPT_4o_LATEST = BasicLLM.of("chatgpt-4o-latest", OPENAI.get());
 
     public static final Supplier<@NonNull BasicLLM> GPT_4o_MINI = BasicLLM.of("gpt-4o-mini", OPENAI.get());
 
@@ -50,9 +52,4 @@ public class CommonLLMs {
             BasicLLM.of("gemini-2.5-pro-exp-03-25", GOOGLE.get(), true);
 
     public static final Supplier<@NonNull BasicLLM> GEMINI_2_0_FLASH = BasicLLM.of("gemini-2.0-flash", GOOGLE.get());
-
-
-
-
-
 }

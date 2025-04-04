@@ -1,4 +1,4 @@
-package org.llmtoolkit.llm;
+package org.llmtoolkit.util;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -7,10 +7,9 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.List;
 import org.junit.jupiter.api.Test;
-import org.llmtoolkit.util.ClassToString;
 
 @SuppressWarnings("unused")
-class ClassToStringTest {
+public class ClassToStringTest {
 
     @Retention(RetentionPolicy.RUNTIME)
     @interface TestAnnotation {
