@@ -11,6 +11,13 @@ import org.llmtoolkit.providers.chatmodel.GoogleChatModelProvider;
 import org.llmtoolkit.providers.chatmodel.OpenAiChatModelProvider;
 import org.llmtoolkit.util.Env;
 
+/**
+ * Collection of commonly used LLM providers.
+ * -
+ * Note: This class violates Open-Closed Principle by coupling multiple provider implementations.
+ * However, this is an intentional trade-off to enable quick experimentation and easy switching
+ * between providers during development and testing.
+ */
 public class CommonProviders {
     public static final Supplier<@NonNull LLMProvider> OPENAI = Suppliers.memoize(
             () -> new CachingLLMProvider(new OpenAiChatModelProvider(null, Env.get("OPENAI_API_KEY"))));

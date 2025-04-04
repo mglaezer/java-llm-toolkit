@@ -6,6 +6,13 @@ import com.google.common.base.Supplier;
 import lombok.NonNull;
 import lombok.experimental.UtilityClass;
 
+/**
+ * Collection of commonly used LLM configurations.
+ * -
+ * Note: This class violates Open-Closed Principle by coupling multiple providers and models.
+ * However, this is an intentional trade-off to enable quick experimentation and easy switching
+ * between latest models during development and testing.
+ */
 @SuppressWarnings("unused")
 @UtilityClass
 public class CommonLLMs {
