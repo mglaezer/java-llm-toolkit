@@ -5,44 +5,51 @@
 
 ## Introduction
 
-Java LLM Toolkit provides capabilities for working with Large Language Models in Java applications, with optional LangChain4j integration.
+A Java toolkit that simplifies working with Large Language Models through powerful templating, structured outputs, and robust JSON/YAML handling. Works standalone or integrates with LangChain4j for advanced features like RAG and memory.
 
 ### JTE (Java Template Engine) based Prompt composition
 
-The toolkit provides a comprehensive templating system that goes beyond LangChain4j's capabilities:
+The toolkit provides a comprehensive templating system that goes beyond basic string templates:
 
-- **[JTE (Java Template Engine)](https://github.com/casid/jte) Integration**: Uses the JTE for structured prompt templates
-  - JTE supports complex template composition with includes, loops, conditionals, etc
-  - JTE IDE plugin provides validation of template parameters
-  - Templates are stored as separate files with `.jte` extension near java code or in resources directory
-  - Annotation-based binding of method parameters to template variables
-  - Strict validation of 1:1 mapping between method parameters and template variables
+- **[JTE (Java Template Engine)](https://github.com/casid/jte) Integration**:
+  - Supports complex template composition with includes, loops, and conditionals
+  - Provides IDE-assisted validation of template parameters
+  - Stores templates as `.jte` files alongside Java code
+  - Uses annotation-based binding of method parameters to template variables
+  - Enforces strict validation of parameter-to-template mapping
   
 ### Structured Output Handling
 
-The toolkit offers a unique approach to structured output handling:
+The toolkit transforms Java code structure directly into LLM output instructions:
 
-- **Java Record-based Output Format Instructions**:
-  - Uses Java bean definitions directly as output format instructions for LLMs
-  - Automatically generates output instructions based on Java record structure
-  - Provides better results compared to JSON Schema or examples approach
-  - Annotations on classes, records, and fields are visible to the LLM
-  - Annotations provide more direct and effective field-level semantic instructions compared to JSON Schema or other approaches
+- **Java Record-based Output Format**:
+  - Uses Java bean definitions as LLM output instructions
+  - Generates format specifications from Java record structure
+  - Leverages annotations to provide additional semantic context to LLMs
+  - Offers better accuracy compared to JSON Schema approach
+  - Supports field-level output validation and repair
 
-### JSON and YAML Handling
+### JSON and YAML Processing
 
-The toolkit provides robust JSON and YAML handling capabilities:
+Robust handling of LLM responses with automatic repair capabilities:
 
-  - Falls back to JSON repair mechanisms if standard parsing fails
-  - Provides advanced repair functionality for malformed JSON returned by some LLMs
-  - Fixes common LLM response issues like missing parts of the syntax, duplicate commas, trailing commas, etc
-  - Removes markdown wrappers and cleans up formatting issues
-  - Provides convenient abstractions for converting java objects to JSON and YAML and back.
+- **Smart Parser and Repair**:
+  - Handles malformed JSON from various LLM providers
+  - Fixes syntax issues like missing commas, unmatched parentheses, and incomplete JSON structures
+  - Removes markdown artifacts and formatting inconsistencies
+  - Provides clean conversion between JSON, YAML, and Java objects
+  - Includes validation to ensure parsing consistency
 
-### Additional Features
+### LangChain4j Integration
 
-  - Can work with or without LangChain4j, either replacing it or extending it.
-  - Compatible with LangChain4j's chat models, memory, RAG, and tools
+Optional integration with LangChain4j ecosystem:
+
+- **Flexible Usage**:
+  - Works as standalone toolkit or LangChain4j extension
+  - Supports LangChain4j chat models
+  - Enables RAG (Retrieval Augmented Generation)
+  - Provides access to conversation memory
+  - Integrates with LangChain4j tools
 
 
 ## Quick Start
