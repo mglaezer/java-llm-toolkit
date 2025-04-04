@@ -5,10 +5,10 @@ import org.llmtoolkit.core.OutputInstructions;
 import org.llmtoolkit.examples.ProgrammingLanguages;
 import org.llmtoolkit.util.json.SerObject;
 
-public class ProgrammingLanguagesLowLevelExample {
+public class NoTemplateExample {
 
     /*
-     * This example demonstrates how to use the low-level API to interact with an LLM.
+     * This example demonstrates how to use the java-llm-toolkit's API to interact with an LLM without using JTE templates.
      */
     public static void main(String[] args) {
 

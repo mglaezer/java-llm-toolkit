@@ -5,7 +5,8 @@
 
 ## Introduction
 
-A Java toolkit that simplifies working with Large Language Models through powerful templating, structured outputs, and robust JSON/YAML handling. 
+A Java toolkit that simplifies working with Large Language Models through powerful templating, structured outputs with additional semantic context, and robust JSON/YAML handling. 
+
 Works standalone or integrates with LangChain4j for features like RAG, tools and memory.
 
 ### JTE (Java Template Engine) based Prompt composition
@@ -19,7 +20,7 @@ The toolkit provides a comprehensive templating system that goes beyond basic st
   - Uses annotation-based binding of method parameters to template variables
   - Enforces strict validation of parameter-to-template mapping
   
-### Structured Output Handling
+### Structured output with additional semantic context
 
 The toolkit transforms Java code structure directly into LLM output instructions:
 
