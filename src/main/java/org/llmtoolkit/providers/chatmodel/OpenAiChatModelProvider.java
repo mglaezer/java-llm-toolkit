@@ -5,11 +5,10 @@ import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.model.openai.OpenAiChatRequestParameters;
 import java.time.Duration;
 import org.llmtoolkit.core.BasicLLM;
-import org.llmtoolkit.util.Env;
 
 public class OpenAiChatModelProvider implements ChatModelProvider {
     private final String baseUrl;
-    private String apiKey;
+    private final String apiKey;
 
     public OpenAiChatModelProvider(String baseUrl, String apiKey) {
         this.baseUrl = baseUrl;
@@ -18,8 +17,6 @@ public class OpenAiChatModelProvider implements ChatModelProvider {
 
     @Override
     public ChatLanguageModel createChatModel(BasicLLM llm) {
-        if (apiKey == null) apiKey = Env.getRequired("OPENAI_API_KEY");
-
         OpenAiChatModel.OpenAiChatModelBuilder builder =
                 OpenAiChatModel.builder().modelName(llm.getModel()).apiKey(apiKey);
 

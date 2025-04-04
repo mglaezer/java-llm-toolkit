@@ -7,6 +7,16 @@ import lombok.Getter;
 import lombok.NonNull;
 import org.llmtoolkit.providers.LLMProvider;
 
+/**
+ * A simplified abstraction for making LLM calls with commonly used parameters.
+ *
+ * This class provides a unified interface for different LLM providers, delegating to either:
+ * - langchain4j for most providers
+ * - AltOpenAiLLMProvider for OpenAI-compatible APIs (see that class for specific use cases)
+ *
+ * Users can implement custom providers using either langchain4j integration
+ * or direct HTTP calls via LLMProvider interface.
+ */
 @Getter
 @Builder(toBuilder = true)
 public class BasicLLM implements StringAnswer {
