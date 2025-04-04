@@ -4,11 +4,9 @@ import dev.langchain4j.model.anthropic.AnthropicChatModel;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import java.time.Duration;
 import org.llmtoolkit.core.BasicLLM;
-import org.llmtoolkit.util.Env;
 
 public class AnthropicChatModelProvider implements ChatModelProvider {
-
-    private String apiKey;
+    private final String apiKey;
 
     public AnthropicChatModelProvider(String apiKey) {
         this.apiKey = apiKey;
@@ -20,8 +18,6 @@ public class AnthropicChatModelProvider implements ChatModelProvider {
             throw new RuntimeException(
                     "Reasoning effort is not supported for Anthropic thinking mode, use thinking tokens instead");
         }
-
-        if (apiKey == null) apiKey = Env.getRequired("ANTHROPIC_API_KEY");
 
         AnthropicChatModel.AnthropicChatModelBuilder builder =
                 AnthropicChatModel.builder().modelName(llm.getModel()).apiKey(apiKey);

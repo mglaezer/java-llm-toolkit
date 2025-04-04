@@ -6,6 +6,13 @@ import com.google.common.base.Supplier;
 import lombok.NonNull;
 import lombok.experimental.UtilityClass;
 
+/**
+ * Collection of commonly used LLM configurations.
+ * -
+ * Note: This class violates Open-Closed Principle by coupling multiple providers and models.
+ * However, this is an intentional trade-off to enable quick experimentation and easy switching
+ * between latest models during development and testing.
+ */
 @SuppressWarnings("unused")
 @UtilityClass
 public class CommonLLMs {
@@ -16,7 +23,9 @@ public class CommonLLMs {
     public static final Supplier<@NonNull BasicLLM> GPT_4_5_PREVIEW =
             BasicLLM.of("gpt-4.5-preview", OPENAI.get(), true);
 
-    public static final Supplier<@NonNull BasicLLM> GPT_4o = BasicLLM.of("chatgpt-4o-latest", OPENAI.get());
+    public static final Supplier<@NonNull BasicLLM> GPT_4o = BasicLLM.of("gpt-4o", OPENAI.get());
+
+    public static final Supplier<@NonNull BasicLLM> GPT_4o_LATEST = BasicLLM.of("chatgpt-4o-latest", OPENAI.get());
 
     public static final Supplier<@NonNull BasicLLM> GPT_4o_MINI = BasicLLM.of("gpt-4o-mini", OPENAI.get());
 
@@ -50,9 +59,4 @@ public class CommonLLMs {
             BasicLLM.of("gemini-2.5-pro-exp-03-25", GOOGLE.get(), true);
 
     public static final Supplier<@NonNull BasicLLM> GEMINI_2_0_FLASH = BasicLLM.of("gemini-2.0-flash", GOOGLE.get());
-
-
-
-
-
 }

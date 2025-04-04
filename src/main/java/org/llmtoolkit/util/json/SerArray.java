@@ -4,7 +4,13 @@ import static org.llmtoolkit.util.json.SerObject.DEFAULT_YAML_WIDTH;
 
 import java.util.List;
 
-@SuppressWarnings("unused")
+/**
+ * Serializes arrays to/from JSON and YAML with format validation.
+ * Ensures round-trip consistency by verifying that re-parsing the serialized output
+ * produces identical results.
+ *
+ * @param <T> type of elements in the array
+ */
 public class SerArray<T> {
     private final List<T> array;
     private final Class<T> clazz;
