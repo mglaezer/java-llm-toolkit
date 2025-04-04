@@ -60,7 +60,8 @@ See [examples](src/test/java/org/llmtoolkit/examples) for common usage patterns 
 
 Follow these instructions on JitPack:
 
-[![](https://jitpack.io/v/mglaezer/java-llm-toolkit.svg)](https://jitpack.io/#mglaezer/java-llm-toolkit)
+[![](https://jitpack.io/v/org.java-llm-toolkit/java-llm-toolkit.svg)](https://jitpack.io/#org.java-llm-toolkit/java-llm-toolkit)
+
 
 ## Contributing
 
