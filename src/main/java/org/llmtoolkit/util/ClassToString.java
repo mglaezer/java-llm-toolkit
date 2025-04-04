@@ -501,12 +501,15 @@ public class ClassToString {
         sb.append(methodIndent);
 
         int methodModifiers = method.getModifiers();
-        String modifierStr;
+
+        // Remove TRANSIENT as it's not valid for methods, but appears in some cases
+        methodModifiers &= ~Modifier.TRANSIENT;
+
         if (isInterface) {
-            modifierStr = Modifier.toString(methodModifiers & ~Modifier.ABSTRACT);
-        } else {
-            modifierStr = Modifier.toString(methodModifiers);
+            methodModifiers &= ~Modifier.ABSTRACT;
         }
+
+        String modifierStr = Modifier.toString(methodModifiers);
         if (!modifierStr.isEmpty()) {
             sb.append(modifierStr).append(" ");
         }
