@@ -24,11 +24,11 @@ import java.util.function.Function;
 
 public class JteTemplateLlmServiceFactory<R> {
 
-    private final Function<String, R> messageService;
+    private final Function<String, R> llmResponseProvider;
     private final TemplateEngine templateEngine;
 
-    public JteTemplateLlmServiceFactory(Function<String, R> messageService, CodeResolver codeResolver) {
-        this.messageService = messageService;
+    public JteTemplateLlmServiceFactory(Function<String, R> llmResponseProvider, CodeResolver codeResolver) {
+        this.llmResponseProvider = llmResponseProvider;
         this.templateEngine = TemplateEngine.create(codeResolver, ContentType.Plain);
     }
 
@@ -54,7 +54,7 @@ public class JteTemplateLlmServiceFactory<R> {
                 return method.invoke(this, args);
             }
             String prompt = preparePrompt(method, args, serviceInterface.getPackage());
-            return messageService.apply(prompt);
+            return llmResponseProvider.apply(prompt);
         }
     }
 
@@ -111,6 +111,7 @@ public class JteTemplateLlmServiceFactory<R> {
     }
 
     // Structured output class.
+    @SuppressWarnings("unused")
     public static class Poem {
         private String title;
         private String content;
