@@ -230,23 +230,10 @@ public class ComprehensiveExample {
     }
 
     public static void main(String[] args) {
-        System.out.println("=== Repository Interface ===");
-        System.out.println(ClassToString.toString(Repository.class, true, false));
+        System.out.println("ClassToString:\n");
+        System.out.println(ClassToString.toString(ComprehensiveExample.class, true, false));
 
-        System.out.println("\n=== Person Record ===");
-        System.out.println(ClassToString.toString(Person.class, true, false));
-
-        System.out.println("\n=== PersonRepository Class ===");
-        System.out.println(ClassToString.toString(PersonRepository.class, true, false));
-
-        // Print all annotations
-        System.out.println("\n=== Info Annotation ===");
-        System.out.println(ClassToString.toString(Info.class, true, false));
-
-        System.out.println("\n=== Validate Annotation ===");
-        System.out.println(ClassToString.toString(Validate.class, true, false));
-
-        System.out.println("\n=== Entity Annotation ===");
-        System.out.println(ClassToString.toString(Entity.class, true, false));
+        System.out.println("\nClassStructureGenerator:\n");
+        System.out.println(new ClassStructureGenerator().generateClassStructure(ComprehensiveExample.class));
     }
 }
