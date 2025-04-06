@@ -33,7 +33,9 @@ public class ClassToString {
                     generateClassDefinition(current, sb, printMethods, qualifyNestedClassNames);
                 } else if (current.isInterface()) {
                     generateInterfaceDefinition(current, sb, printMethods, qualifyNestedClassNames);
-                } else if (!current.isEnum()) {
+                } else if (current.isEnum()) {
+                    generateEnumDefinition(current, sb, printMethods, qualifyNestedClassNames);
+                } else {
                     generateRegularClassDefinition(current, sb, printMethods, qualifyNestedClassNames);
                 }
                 sb.append("\n");
@@ -71,25 +73,64 @@ public class ClassToString {
     }
 
     private static void addTypeAndGenerics(Type type, Queue<Class<?>> toProcess) {
+        // Use a set to track types we've already seen to prevent infinite recursion
+        addTypeAndGenerics(type, toProcess, new HashSet<>());
+    }
+
+    private static void addTypeAndGenerics(Type type, Queue<Class<?>> toProcess, Set<Type> visited) {
+        // Prevent infinite recursion by tracking visited types
+        if (visited.contains(type)) {
+            return;
+        }
+        visited.add(type);
+
         if (type instanceof Class<?> clazz) {
-            // Skip void type, primitive types, and array classes
-            if (clazz == void.class || clazz.isPrimitive() || clazz.isArray()) {
+            // Skip void type, primitive types
+            if (clazz == void.class || clazz.isPrimitive()) {
                 return;
             }
-            if ((clazz.isRecord() || clazz.isInterface() || !clazz.isEnum())
-                    && !clazz.getName().startsWith(JAVA_PACKAGE_PREFIX)) {
+            if (clazz.isArray()) {
+                addTypeAndGenerics(clazz.getComponentType(), toProcess, visited);
+                return;
+            }
+            if (!clazz.getName().startsWith(JAVA_PACKAGE_PREFIX)) {
                 toProcess.add(clazz);
+
+                // Add nested classes
+                for (Class<?> nestedClass : clazz.getDeclaredClasses()) {
+                    if (!nestedClass.isSynthetic()) {
+                        toProcess.add(nestedClass);
+                    }
+                }
             }
         } else if (type instanceof ParameterizedType paramType) {
             Type rawType = paramType.getRawType();
             if (rawType instanceof Class<?> rawClass && !rawClass.getName().startsWith(JAVA_PACKAGE_PREFIX)) {
-                if (rawClass.isRecord() || rawClass.isInterface() || !rawClass.isEnum()) {
-                    toProcess.add(rawClass);
-                }
+                toProcess.add(rawClass);
             }
 
             for (Type typeArg : paramType.getActualTypeArguments()) {
-                addTypeAndGenerics(typeArg, toProcess);
+                addTypeAndGenerics(typeArg, toProcess, visited);
+            }
+        } else if (type instanceof WildcardType wildcardType) {
+            // Process upper and lower bounds of wildcard types
+            for (Type upperBound : wildcardType.getUpperBounds()) {
+                if (!upperBound.equals(Object.class)) { // Skip Object.class to prevent recursion
+                    addTypeAndGenerics(upperBound, toProcess, visited);
+                }
+            }
+            for (Type lowerBound : wildcardType.getLowerBounds()) {
+                addTypeAndGenerics(lowerBound, toProcess, visited);
+            }
+        } else if (type instanceof GenericArrayType genericArrayType) {
+            // Process component type of generic arrays
+            addTypeAndGenerics(genericArrayType.getGenericComponentType(), toProcess, visited);
+        } else if (type instanceof TypeVariable<?> typeVariable) {
+            // Process bounds of type variables
+            for (Type bound : typeVariable.getBounds()) {
+                if (!bound.equals(Object.class)) { // Skip Object.class to prevent recursion
+                    addTypeAndGenerics(bound, toProcess, visited);
+                }
             }
         }
     }
@@ -259,23 +300,109 @@ public class ClassToString {
                 sb.append(")");
             }
         } catch (Exception e) {
-            return "@" + annotationClassName;
+            // If we encounter an exception, try a simpler approach
+            try {
+                // Just use the annotation's toString but format it nicely
+                String annotationStr = annotation.toString();
+                // Remove the leading @ if present
+                if (annotationStr.startsWith("@")) {
+                    annotationStr = annotationStr.substring(1);
+                }
+                // Extract the annotation name and parameters
+                int parenIndex = annotationStr.indexOf("(");
+                if (parenIndex > 0) {
+                    String name = annotationStr.substring(0, parenIndex);
+                    String params = annotationStr.substring(parenIndex);
+                    // Use just the simple name
+                    int lastDotIndex = name.lastIndexOf(".");
+                    if (lastDotIndex > 0) {
+                        name = name.substring(lastDotIndex + 1);
+                    }
+                    return "@" + name + params;
+                }
+                // If no parentheses, just use the simple name
+                int lastDotIndex = annotationStr.lastIndexOf(".");
+                if (lastDotIndex > 0) {
+                    annotationStr = annotationStr.substring(lastDotIndex + 1);
+                }
+                return "@" + annotationStr;
+            } catch (Exception ex) {
+                // If all else fails, just return the annotation class name
+                return "@" + annotationClassName;
+            }
         }
 
         return sb.toString();
     }
 
     private static String formatAnnotationValue(Object value) {
-        if (value instanceof String) {
+        if (value == null) {
+            return "null";
+        } else if (value instanceof String) {
             return "\"" + value + "\"";
         } else if (value instanceof Class<?>) {
             return ((Class<?>) value).getSimpleName() + ".class";
         } else if (value instanceof Enum<?>) {
             return value.toString();
         } else if (value.getClass().isArray()) {
-            return Arrays.deepToString((Object[]) value);
+            if (value.getClass().getComponentType().isPrimitive()) {
+                // Handle primitive arrays
+                if (value instanceof boolean[]) {
+                    return formatPrimitiveArray(value);
+                } else if (value instanceof byte[]) {
+                    return formatPrimitiveArray(value);
+                } else if (value instanceof char[]) {
+                    return formatPrimitiveArray(value);
+                } else if (value instanceof double[]) {
+                    return formatPrimitiveArray(value);
+                } else if (value instanceof float[]) {
+                    return formatPrimitiveArray(value);
+                } else if (value instanceof int[]) {
+                    return formatPrimitiveArray(value);
+                } else if (value instanceof long[]) {
+                    return formatPrimitiveArray(value);
+                } else if (value instanceof short[]) {
+                    return formatPrimitiveArray(value);
+                }
+                return "[]";
+            }
+
+            // Handle object arrays with proper formatting
+            Object[] array = (Object[]) value;
+            if (array.length == 0) {
+                return "[]";
+            }
+
+            StringBuilder sb = new StringBuilder("[");
+            for (int i = 0; i < array.length; i++) {
+                Object element = array[i];
+                sb.append(formatAnnotationValue(element));
+                if (i < array.length - 1) {
+                    sb.append(", ");
+                }
+            }
+            sb.append("]");
+            return sb.toString();
         }
         return value.toString();
+    }
+
+    private static String formatPrimitiveArray(Object array) {
+        int length = Array.getLength(array);
+        if (length == 0) {
+            return "[]";
+        }
+
+        StringBuilder sb = new StringBuilder("[");
+        for (int i = 0; i < length; i++) {
+            Object element = Array.get(array, i);
+            sb.append(element);
+            if (i < length - 1) {
+                sb.append(", ");
+            }
+        }
+        sb.append("]");
+        return sb.toString();
     }
 
     private static String getTypeName(Type type, boolean qualifyNestedClassNames) {
@@ -297,6 +424,22 @@ public class ClassToString {
                             .map(t -> getTypeName(t, qualifyNestedClassNames))
                             .collect(Collectors.joining(", "))
                     + ">";
+        } else if (type instanceof WildcardType wildcardType) {
+            StringBuilder sb = new StringBuilder("?");
+            Type[] upperBounds = wildcardType.getUpperBounds();
+            Type[] lowerBounds = wildcardType.getLowerBounds();
+
+            if (lowerBounds.length > 0) {
+                sb.append(" super ").append(getTypeName(lowerBounds[0], qualifyNestedClassNames));
+            } else if (upperBounds.length > 0 && !upperBounds[0].equals(Object.class)) {
+                sb.append(" extends ").append(getTypeName(upperBounds[0], qualifyNestedClassNames));
+            }
+
+            return sb.toString();
+        } else if (type instanceof GenericArrayType genericArrayType) {
+            return getTypeName(genericArrayType.getGenericComponentType(), qualifyNestedClassNames) + "[]";
+        } else if (type instanceof TypeVariable<?> typeVariable) {
+            return typeVariable.getName();
         }
         return type.getTypeName();
     }
@@ -339,6 +482,57 @@ public class ClassToString {
                     if (i < methods.length - 1) {
                         sb.append("\n");
                     }
+                }
+            }
+        }
+
+        sb.append(BASE_INDENT).append("}\n");
+    }
+
+    private static void generateEnumDefinition(
+            Class<?> enumClass, StringBuilder sb, boolean printMethods, boolean qualifyNestedClassNames) {
+        appendAnnotations(enumClass.getAnnotations(), sb);
+        appendModifiers(enumClass.getModifiers() & ~Modifier.FINAL, sb, false);
+        sb.append("enum ").append(getTypeName(enumClass, qualifyNestedClassNames));
+        appendInterfaces(enumClass.getInterfaces(), sb, "implements");
+        sb.append(" {\n");
+
+        // Add enum constants
+        Object[] constants = enumClass.getEnumConstants();
+        if (constants != null && constants.length > 0) {
+            for (int i = 0; i < constants.length; i++) {
+                sb.append(SINGLE_INDENT).append(constants[i].toString());
+                if (i < constants.length - 1) {
+                    sb.append(",\n");
+                } else {
+                    sb.append(";\n");
+                }
+            }
+            sb.append("\n");
+        }
+
+        // Add fields
+        for (Field field : enumClass.getDeclaredFields()) {
+            if (!field.isSynthetic() && !field.isEnumConstant()) {
+                appendField(field, sb);
+            }
+        }
+
+        // Add methods
+        if (printMethods) {
+            // Add constructors
+            for (Constructor<?> constructor : enumClass.getDeclaredConstructors()) {
+                if (!constructor.isSynthetic()) {
+                    appendConstructor(constructor, sb, qualifyNestedClassNames);
+                }
+            }
+
+            // Add methods
+            for (Method method : enumClass.getDeclaredMethods()) {
+                if (!method.isSynthetic()
+                        && !method.getName().equals("values")
+                        && !method.getName().equals("valueOf")) {
+                    appendMethod(method, sb, qualifyNestedClassNames, false);
                 }
             }
         }
@@ -439,7 +633,26 @@ public class ClassToString {
     private static void appendTypeParameters(TypeVariable<?>[] typeParameters, StringBuilder sb) {
         if (typeParameters.length > 0) {
             sb.append("<");
-            sb.append(Arrays.stream(typeParameters).map(Type::getTypeName).collect(Collectors.joining(", ")));
+            for (int i = 0; i < typeParameters.length; i++) {
+                TypeVariable<?> typeVar = typeParameters[i];
+                sb.append(typeVar.getName());
+
+                // Add bounds if present and not just Object
+                Type[] bounds = typeVar.getBounds();
+                if (bounds.length > 0 && !bounds[0].equals(Object.class)) {
+                    sb.append(" extends ");
+                    for (int j = 0; j < bounds.length; j++) {
+                        sb.append(getTypeName(bounds[j], true));
+                        if (j < bounds.length - 1) {
+                            sb.append(" & ");
+                        }
+                    }
+                }
+
+                if (i < typeParameters.length - 1) {
+                    sb.append(", ");
+                }
+            }
             sb.append(">");
         }
     }
@@ -449,6 +662,26 @@ public class ClassToString {
             sb.append(" ").append(keyword).append(" ");
             sb.append(Arrays.stream(interfaces).map(Class::getSimpleName).collect(Collectors.joining(", ")));
         }
+    }
+
+    private static void appendField(Field field, StringBuilder sb) {
+        // Skip synthetic fields
+        if (field.isSynthetic()) {
+            return;
+        }
+
+        // Add annotations
+        appendAnnotations(field.getAnnotations(), sb);
+
+        // Add modifiers
+        sb.append(SINGLE_INDENT);
+        appendModifiers(field.getModifiers(), sb, false);
+
+        // Add type and name
+        sb.append(getTypeName(field.getGenericType(), false))
+                .append(" ")
+                .append(field.getName())
+                .append(";\n");
     }
 
     private static void appendMethod(
@@ -505,13 +738,51 @@ public class ClassToString {
         // Remove TRANSIENT as it's not valid for methods, but appears in some cases
         methodModifiers &= ~Modifier.TRANSIENT;
 
-        if (isInterface) {
+        // Handle default methods in interfaces
+        boolean isDefault = isInterface
+                && (methodModifiers & Modifier.PUBLIC) != 0
+                && !Modifier.isStatic(methodModifiers)
+                && !Modifier.isAbstract(methodModifiers);
+
+        if (isInterface && !isDefault) {
             methodModifiers &= ~Modifier.ABSTRACT;
         }
 
         String modifierStr = Modifier.toString(methodModifiers);
         if (!modifierStr.isEmpty()) {
             sb.append(modifierStr).append(" ");
+        }
+
+        // Add 'default' keyword for default methods in interfaces
+        if (isDefault) {
+            sb.append("default ");
+        }
+
+        // Handle generic type parameters for methods
+        TypeVariable<?>[] typeParameters = method.getTypeParameters();
+        if (typeParameters.length > 0) {
+            sb.append("<");
+            for (int i = 0; i < typeParameters.length; i++) {
+                TypeVariable<?> typeVar = typeParameters[i];
+                sb.append(typeVar.getName());
+
+                // Add bounds if present
+                Type[] bounds = typeVar.getBounds();
+                if (bounds.length > 0 && !bounds[0].equals(Object.class)) {
+                    sb.append(" extends ");
+                    for (int j = 0; j < bounds.length; j++) {
+                        sb.append(getTypeName(bounds[j], qualifyNestedClassNames));
+                        if (j < bounds.length - 1) {
+                            sb.append(" & ");
+                        }
+                    }
+                }
+
+                if (i < typeParameters.length - 1) {
+                    sb.append(", ");
+                }
+            }
+            sb.append("> ");
         }
 
         sb.append(getTypeName(method.getGenericReturnType(), qualifyNestedClassNames))
@@ -525,16 +796,26 @@ public class ClassToString {
             for (Annotation annotation : param.getAnnotations()) {
                 sb.append(formatAnnotation(annotation)).append(" ");
             }
-            sb.append(getTypeName(param.getParameterizedType(), qualifyNestedClassNames))
-                    .append(" ")
-                    .append(param.getName());
+            sb.append(getTypeName(param.getParameterizedType(), qualifyNestedClassNames));
+
+            // Handle varargs parameters
+            if (i == parameters.length - 1 && method.isVarArgs()) {
+                // Replace the last [] with ... for varargs
+                int lastBracketIndex = sb.lastIndexOf("[");
+                if (lastBracketIndex >= 0) {
+                    sb.delete(lastBracketIndex, lastBracketIndex + 2);
+                    sb.append("...");
+                }
+            }
+
+            sb.append(" ").append(param.getName());
             if (i < parameters.length - 1) {
                 sb.append(", ");
             }
         }
         sb.append(")");
 
-        if (isInterface) {
+        if (isInterface && !isDefault && !Modifier.isStatic(methodModifiers)) {
             sb.append(";\n");
         } else {
             sb.append(" {}\n");
