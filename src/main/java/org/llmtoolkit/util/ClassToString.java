@@ -265,7 +265,6 @@ public class ClassToString {
             // Sort methods to ensure consistent ordering
             methods = methods.clone();
             Arrays.sort(methods, (a, b) -> {
-                // Put "value" first, then sort alphabetically
                 if (a.getName().equals(VALUE_METHOD)) return -1;
                 if (b.getName().equals(VALUE_METHOD)) return 1;
                 return a.getName().compareTo(b.getName());
@@ -276,6 +275,14 @@ public class ClassToString {
                 method.setAccessible(true);
                 Object value = method.invoke(annotation);
                 Object defaultValue = method.getDefaultValue();
+
+                // NOTE: Skipping empty arrays is not strictly correct as they might not be default values.
+                // We do this for cleaner output, trading complete accuracy for better readability.
+                // In practice, empty arrays in annotations are rarely meaningful when different from null.
+                if (value != null && value.getClass().isArray() && Array.getLength(value) == 0) {
+                    continue;
+                }
+
                 if (value != null && (!value.equals(defaultValue))) {
                     nonDefaultValues.put(method.getName(), value);
                 }
@@ -284,10 +291,8 @@ public class ClassToString {
             if (!nonDefaultValues.isEmpty()) {
                 sb.append("(");
                 if (nonDefaultValues.size() == 1 && nonDefaultValues.containsKey(VALUE_METHOD)) {
-                    // If "value" is the only parameter, just print its value without the name
                     sb.append(formatAnnotationValue(nonDefaultValues.get(VALUE_METHOD)));
                 } else {
-                    // Print all parameters with their names
                     boolean first = true;
                     for (Map.Entry<String, Object> entry : nonDefaultValues.entrySet()) {
                         if (!first) {
@@ -300,36 +305,7 @@ public class ClassToString {
                 sb.append(")");
             }
         } catch (Exception e) {
-            // If we encounter an exception, try a simpler approach
-            try {
-                // Just use the annotation's toString but format it nicely
-                String annotationStr = annotation.toString();
-                // Remove the leading @ if present
-                if (annotationStr.startsWith("@")) {
-                    annotationStr = annotationStr.substring(1);
-                }
-                // Extract the annotation name and parameters
-                int parenIndex = annotationStr.indexOf("(");
-                if (parenIndex > 0) {
-                    String name = annotationStr.substring(0, parenIndex);
-                    String params = annotationStr.substring(parenIndex);
-                    // Use just the simple name
-                    int lastDotIndex = name.lastIndexOf(".");
-                    if (lastDotIndex > 0) {
-                        name = name.substring(lastDotIndex + 1);
-                    }
-                    return "@" + name + params;
-                }
-                // If no parentheses, just use the simple name
-                int lastDotIndex = annotationStr.lastIndexOf(".");
-                if (lastDotIndex > 0) {
-                    annotationStr = annotationStr.substring(lastDotIndex + 1);
-                }
-                return "@" + annotationStr;
-            } catch (Exception ex) {
-                // If all else fails, just return the annotation class name
-                return "@" + annotationClassName;
-            }
+            return "@" + annotationClassName;
         }
 
         return sb.toString();
@@ -734,13 +710,19 @@ public class ClassToString {
     private static void appendMethod(
             Method method, StringBuilder sb, boolean qualifyNestedClassNames, boolean isInterface) {
         String methodIndent = SINGLE_INDENT;
+        int modifiers = method.getModifiers();
+        Class<?> declaringClass = method.getDeclaringClass();
+
+        // Skip record component accessors
+        if (declaringClass.isRecord() && isRecordGeneratedMethod(method, declaringClass)) {
+            return;
+        }
 
         // Get all annotations including inherited ones
         Set<Annotation> allAnnotations = new LinkedHashSet<>();
         Collections.addAll(allAnnotations, method.getAnnotations());
 
         // Check for @Override
-        Class<?> declaringClass = method.getDeclaringClass();
         String methodName = method.getName();
         Class<?>[] paramTypes = method.getParameterTypes();
 
@@ -780,22 +762,20 @@ public class ClassToString {
 
         sb.append(methodIndent);
 
-        int methodModifiers = method.getModifiers();
-
         // Remove TRANSIENT as it's not valid for methods, but appears in some cases
-        methodModifiers &= ~Modifier.TRANSIENT;
+        modifiers &= ~Modifier.TRANSIENT;
 
         // Handle default methods in interfaces
         boolean isDefault = isInterface
-                && (methodModifiers & Modifier.PUBLIC) != 0
-                && !Modifier.isStatic(methodModifiers)
-                && !Modifier.isAbstract(methodModifiers);
+                && (modifiers & Modifier.PUBLIC) != 0
+                && !Modifier.isStatic(modifiers)
+                && !Modifier.isAbstract(modifiers);
 
         if (isInterface && !isDefault) {
-            methodModifiers &= ~Modifier.ABSTRACT;
+            modifiers &= ~Modifier.ABSTRACT;
         }
 
-        String modifierStr = Modifier.toString(methodModifiers);
+        String modifierStr = Modifier.toString(modifiers);
         if (!modifierStr.isEmpty()) {
             sb.append(modifierStr).append(" ");
         }
@@ -862,11 +842,26 @@ public class ClassToString {
         }
         sb.append(")");
 
-        if (isInterface && !isDefault && !Modifier.isStatic(methodModifiers)) {
-            sb.append(";\n");
-        } else {
-            sb.append(" {}\n");
+        // Determine if method should have implementation
+        boolean needsImplementation = !isInterface
+                || // Regular class methods always have implementation
+                isDefault
+                || // Interface default methods
+                Modifier.isStatic(modifiers)
+                || // Static methods
+                Modifier.isPrivate(modifiers); // Private interface methods
+
+        // Abstract methods never have implementation
+        if (Modifier.isAbstract(modifiers)) {
+            needsImplementation = false;
         }
+
+        if (needsImplementation) {
+            sb.append(" { /* impl */ }");
+        } else {
+            sb.append(";");
+        }
+        sb.append("\n");
     }
 
     private static String formatParameter(Parameter param, boolean qualifyNestedClassNames) {
