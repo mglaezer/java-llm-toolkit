@@ -232,7 +232,7 @@ public class ComprehensiveExample {
 
     @Test
     void testComprehensiveExample() {
-        System.out.println("\nClassStructureGenerator:\n");
-        System.out.println(new ClassStructureGenerator().generateClassStructure(ComprehensiveExample.class));
+
+        System.out.println(ClassToString.toString(ComprehensiveExample.class, true, false));
     }
 }

@@ -157,7 +157,7 @@ public class ClassToString {
         }
         sb.append(")");
 
-        appendInterfaces(clazz.getInterfaces(), sb, "implements");
+        appendInterfaces(clazz.getInterfaces(), sb);
         sb.append(" {\n");
 
         if (printMethods) {
@@ -364,16 +364,16 @@ public class ClassToString {
                 } else if (value instanceof short[]) {
                     return formatPrimitiveArray(value);
                 }
-                return "[]";
+                return "{}";
             }
 
             // Handle object arrays with proper formatting
             Object[] array = (Object[]) value;
             if (array.length == 0) {
-                return "[]";
+                return "{}";
             }
 
-            StringBuilder sb = new StringBuilder("[");
+            StringBuilder sb = new StringBuilder("{");
             for (int i = 0; i < array.length; i++) {
                 Object element = array[i];
                 sb.append(formatAnnotationValue(element));
@@ -381,7 +381,7 @@ public class ClassToString {
                     sb.append(", ");
                 }
             }
-            sb.append("]");
+            sb.append("}");
             return sb.toString();
         }
         return value.toString();
@@ -390,10 +390,10 @@ public class ClassToString {
     private static String formatPrimitiveArray(Object array) {
         int length = Array.getLength(array);
         if (length == 0) {
-            return "[]";
+            return "{}";
         }
 
-        StringBuilder sb = new StringBuilder("[");
+        StringBuilder sb = new StringBuilder("{");
         for (int i = 0; i < length; i++) {
             Object element = Array.get(array, i);
             sb.append(element);
@@ -401,7 +401,7 @@ public class ClassToString {
                 sb.append(", ");
             }
         }
-        sb.append("]");
+        sb.append("}");
         return sb.toString();
     }
 
@@ -466,11 +466,27 @@ public class ClassToString {
 
     private static void generateInterfaceDefinition(
             Class<?> interfaceClass, StringBuilder sb, boolean printMethods, boolean qualifyNestedClassNames) {
+        // Skip if this is an annotation interface or extends one
+        if (isAnnotationInterface(interfaceClass)) {
+            return;
+        }
+
         appendAnnotations(interfaceClass.getAnnotations(), sb);
         appendModifiers(interfaceClass.getModifiers(), sb, true);
         sb.append(interfaceClass.getSimpleName());
         appendTypeParameters(interfaceClass.getTypeParameters(), sb);
-        appendInterfaces(interfaceClass.getInterfaces(), sb, "extends");
+
+        // Handle generic interfaces
+        Type[] genericInterfaces = interfaceClass.getGenericInterfaces();
+        if (genericInterfaces.length > 0) {
+            sb.append(" extends ");
+            for (int i = 0; i < genericInterfaces.length; i++) {
+                if (i > 0) {
+                    sb.append(", ");
+                }
+                sb.append(getTypeName(genericInterfaces[i], qualifyNestedClassNames));
+            }
+        }
         sb.append(" {\n");
 
         if (printMethods) {
@@ -489,12 +505,32 @@ public class ClassToString {
         sb.append(BASE_INDENT).append("}\n");
     }
 
+    private static boolean isAnnotationInterface(Class<?> clazz) {
+        if (!clazz.isInterface()) {
+            return false;
+        }
+
+        // Check if it's an annotation interface directly
+        if (clazz.equals(Annotation.class) || clazz.isAnnotation()) {
+            return true;
+        }
+
+        // Check if it extends an annotation interface
+        for (Class<?> iface : clazz.getInterfaces()) {
+            if (isAnnotationInterface(iface)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private static void generateEnumDefinition(
             Class<?> enumClass, StringBuilder sb, boolean printMethods, boolean qualifyNestedClassNames) {
         appendAnnotations(enumClass.getAnnotations(), sb);
         appendModifiers(enumClass.getModifiers() & ~Modifier.FINAL, sb, false);
         sb.append("enum ").append(getTypeName(enumClass, qualifyNestedClassNames));
-        appendInterfaces(enumClass.getInterfaces(), sb, "implements");
+        appendInterfaces(enumClass.getInterfaces(), sb);
         sb.append(" {\n");
 
         // Add enum constants
@@ -547,12 +583,23 @@ public class ClassToString {
         sb.append("class ").append(getTypeName(clazz, qualifyNestedClassNames));
         appendTypeParameters(clazz.getTypeParameters(), sb);
 
-        Class<?> superclass = clazz.getSuperclass();
-        if (superclass != null && superclass != Object.class) {
-            sb.append(" extends ").append(getTypeName(superclass, qualifyNestedClassNames));
+        // Handle generic superclass
+        Type genericSuperclass = clazz.getGenericSuperclass();
+        if (genericSuperclass != null && !genericSuperclass.equals(Object.class)) {
+            sb.append(" extends ").append(getTypeName(genericSuperclass, qualifyNestedClassNames));
         }
 
-        appendInterfaces(clazz.getInterfaces(), sb, "implements");
+        // Handle generic interfaces
+        Type[] genericInterfaces = clazz.getGenericInterfaces();
+        if (genericInterfaces.length > 0) {
+            sb.append(" implements ");
+            for (int i = 0; i < genericInterfaces.length; i++) {
+                if (i > 0) {
+                    sb.append(", ");
+                }
+                sb.append(getTypeName(genericInterfaces[i], qualifyNestedClassNames));
+            }
+        }
         sb.append(" {\n");
 
         if (printMethods) {
@@ -657,9 +704,9 @@ public class ClassToString {
         }
     }
 
-    private static void appendInterfaces(Class<?>[] interfaces, StringBuilder sb, String keyword) {
+    private static void appendInterfaces(Class<?>[] interfaces, StringBuilder sb) {
         if (interfaces.length > 0) {
-            sb.append(" ").append(keyword).append(" ");
+            sb.append(" ").append("implements").append(" ");
             sb.append(Arrays.stream(interfaces).map(Class::getSimpleName).collect(Collectors.joining(", ")));
         }
     }

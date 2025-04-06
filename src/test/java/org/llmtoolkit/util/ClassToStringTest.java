@@ -169,7 +169,7 @@ public class ClassToStringTest {
 
     @Test
     void testExtendingInterface() {
-        String result = ClassToString.toString(ExtendingInterface.class, true, true);
+        String result = ClassToString.toString(ExtendingInterface.class, true, false);
         assertTrue(result.contains("interface ExtendingInterface extends SimpleInterface"));
         assertTrue(result.contains("void additionalMethod();"));
     }
@@ -248,7 +248,7 @@ public class ClassToStringTest {
             void childMethod();
         }
 
-        String result = ClassToString.toString(Child.class, true, true);
+        String result = ClassToString.toString(Child.class, true, false);
         assertTrue(result.contains("interface Child extends Middle"));
         assertTrue(result.contains("void childMethod();"));
     }
