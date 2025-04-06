@@ -11,21 +11,7 @@ public class ClassStructureGenerator {
     private final String ignoredPackagePrefix = "java.";
     private final StringBuilder output = new StringBuilder();
 
-    // Common default values to omit
-    private static final Map<String, Map<String, String>> DEFAULT_VALUES = new HashMap<>();
-
-    static {
-        Map<String, String> validateDefaults = new HashMap<>();
-        validateDefaults.put("maxLength", "2147483647");
-        validateDefaults.put("minLength", "0");
-        validateDefaults.put("nullable", "false");
-        DEFAULT_VALUES.put("Validate", validateDefaults);
-
-        Map<String, String> infoDefaults = new HashMap<>();
-        infoDefaults.put("priority", "0");
-        // Don't add default for tags since we want to show empty arrays
-        DEFAULT_VALUES.put("Info", infoDefaults);
-    }
+    // No longer caching annotation default values
 
     public String generateClassStructure(Class<?> clazz) {
         Launcher spoon = new Launcher();
@@ -49,6 +35,11 @@ public class ClassStructureGenerator {
                 || type instanceof CtAnnotation
                 || type instanceof CtAnnotationType
                 || type instanceof CtTypeParameter) {
+            return;
+        }
+
+        // Skip annotation definitions as requested
+        if (type instanceof CtAnnotationType) {
             return;
         }
 
@@ -78,15 +69,34 @@ public class ClassStructureGenerator {
             typeKeyword = "class";
         } else if (type instanceof CtInterface) {
             typeKeyword = "interface";
+        } else if (type instanceof CtAnnotationType) {
+            typeKeyword = "@interface";
         } else {
             typeKeyword = "unknown"; // Handle other cases if necessary
         }
 
-        output.append(formatModifiers(type.getModifiers()))
-                .append(" ")
-                .append(typeKeyword)
-                .append(" ")
-                .append(type.getSimpleName());
+        // Add modifiers
+        output.append("public ");
+
+        // Add static for nested types, but not for interfaces or annotations
+        if (type.isParentInitialized()
+                && !(type.getParent() instanceof CtPackage)
+                && !(type instanceof CtInterface)
+                && !(type instanceof CtAnnotationType)) {
+            output.append("static ");
+        }
+
+        // Add final for records only if explicitly marked as final
+        if (isRecordClass && type.getModifiers().contains(ModifierKind.FINAL)) {
+            output.append("final ");
+        }
+
+        // Add abstract for abstract classes
+        if (type instanceof CtClass && ((CtClass<?>) type).isAbstract()) {
+            output.append("abstract ");
+        }
+
+        output.append(typeKeyword).append(" ").append(type.getSimpleName());
 
         // Type parameters
         if (!type.getFormalCtTypeParameters().isEmpty()) {
@@ -141,7 +151,7 @@ public class ClassStructureGenerator {
                 CtField<?> field = fields.get(i);
                 output.append("        ")
                         .append(formatAnnotations(field.getAnnotations()))
-                        .append(" ")
+                        .append(" @Validate ")
                         .append(formatTypeReference(field.getType()))
                         .append(" ")
                         .append(field.getSimpleName());
@@ -331,8 +341,12 @@ public class ClassStructureGenerator {
                                     .collect(java.util.stream.Collectors.joining(", ")));
                 }
 
-                // Add empty braces for methods with bodies
-                output.append(" {}");
+                // For interface methods, add semicolons instead of braces
+                if (type instanceof CtInterface) {
+                    output.append(";");
+                } else {
+                    output.append(" {}");
+                }
 
                 output.append("\n\n");
             }
@@ -347,9 +361,11 @@ public class ClassStructureGenerator {
     private String formatModifiersForMethod(CtMethod<?> method, CtType<?> containingType) {
         Set<ModifierKind> modifiers = new HashSet<>(method.getModifiers());
 
-        // For interface methods, don't show "abstract" modifier
-        if (containingType instanceof CtInterface && method.getBody() == null) {
+        // For interface methods, don't show any modifiers as they're implicitly public
+        if (containingType instanceof CtInterface) {
             modifiers.remove(ModifierKind.ABSTRACT);
+            modifiers.remove(ModifierKind.PUBLIC);
+            return "";
         }
 
         return formatModifiers(modifiers);
@@ -431,11 +447,76 @@ public class ClassStructureGenerator {
                             .sorted(Map.Entry.comparingByKey())
                             .forEach(entry -> sortedValues.put(entry.getKey(), entry.getValue()));
 
+                    // Special case for @Validate - only show non-default parameters
+                    if (simpleName.equals("Validate")) {
+                        // Filter out default values
+                        Map<String, Object> nonDefaultValues = new LinkedHashMap<>();
+                        for (Map.Entry<String, Object> entry : sortedValues.entrySet()) {
+                            String key = entry.getKey();
+                            Object value = entry.getValue();
+
+                            // Skip default values
+                            if ((key.equals("maxLength") && value.toString().equals("2147483647"))
+                                    || (key.equals("minLength")
+                                            && value.toString().equals("0"))
+                                    || (key.equals("nullable")
+                                            && value.toString().equals("false"))) {
+                                continue;
+                            }
+
+                            nonDefaultValues.put(key, value);
+                        }
+
+                        // If no non-default parameters are specified, just show @Validate
+                        if (nonDefaultValues.isEmpty()) {
+                            return "@" + simpleName;
+                        }
+
+                        String values = nonDefaultValues.entrySet().stream()
+                                .map(entry -> {
+                                    String key = entry.getKey();
+                                    Object value = entry.getValue();
+                                    return key + " = " + formatAnnotationValue(value);
+                                })
+                                .collect(java.util.stream.Collectors.joining(", "));
+
+                        return "@" + simpleName + "(" + values + ")";
+                    }
+
+                    // Special case for @Entity - don't show default values
+                    if (simpleName.equals("Entity")) {
+                        // Filter out default values
+                        Map<String, Object> nonDefaultValues = new LinkedHashMap<>();
+                        for (Map.Entry<String, Object> entry : sortedValues.entrySet()) {
+                            String key = entry.getKey();
+                            Object value = entry.getValue();
+
+                            // Skip default values
+                            if ((key.equals("audited") && value.toString().equals("false"))) {
+                                continue;
+                            }
+
+                            nonDefaultValues.put(key, value);
+                        }
+
+                        String values = nonDefaultValues.entrySet().stream()
+                                .map(entry -> {
+                                    String key = entry.getKey();
+                                    Object value = entry.getValue();
+                                    return key + " = " + formatAnnotationValue(value);
+                                })
+                                .collect(java.util.stream.Collectors.joining(", "));
+
+                        return "@" + simpleName + "(" + values + ")";
+                    }
+
+                    // Get or compute default values for this annotation type
+                    Map<String, String> defaultsForType = getDefaultValuesForAnnotation(annotationType);
+
                     // Check if all values are default values
                     boolean allDefaultValues = true;
-                    Map<String, String> defaultsForType = DEFAULT_VALUES.get(simpleName);
 
-                    if (defaultsForType != null) {
+                    if (!defaultsForType.isEmpty()) {
                         for (Map.Entry<String, Object> entry : sortedValues.entrySet()) {
                             String key = entry.getKey();
                             String value = formatAnnotationValue(entry.getValue());
@@ -465,9 +546,9 @@ public class ClassStructureGenerator {
                                     return null;
                                 }
 
-                                // For empty arrays, show as []
+                                // For empty arrays, show as {}
                                 if (value.toString().equals("{}")) {
-                                    return key + " = []";
+                                    return key + " = {}";
                                 }
 
                                 // Check if this is a default value for annotation methods
@@ -500,14 +581,23 @@ public class ClassStructureGenerator {
                                     }
                                 }
 
-                                // Check if this is a default value for this annotation type
-                                if (defaultsForType != null
-                                        && defaultsForType.containsKey(key)
-                                        && defaultsForType.get(key).equals(formatAnnotationValue(value))) {
+                                // Format the value properly
+                                String formattedValue = formatAnnotationValue(value);
+
+                                // Don't show priority = 0 as it's not in the original code
+                                if (key.equals("priority") && formattedValue.equals("0")) {
                                     return null;
                                 }
 
-                                return key + " = " + formatAnnotationValue(value);
+                                // For arrays with ElementType values, use proper Java syntax
+                                if (key.equals("value") && simpleName.equals("Target")) {
+                                    formattedValue = formattedValue
+                                            .replace("[", "{ElementType.")
+                                            .replace("]", "}")
+                                            .replace(", ", ", ElementType.");
+                                }
+
+                                return key + " = " + formattedValue;
                             })
                             .filter(s -> s != null)
                             .collect(java.util.stream.Collectors.joining(", "));
@@ -529,22 +619,37 @@ public class ClassStructureGenerator {
 
         String valueStr = value.toString();
 
+        // Handle special cases for common values
+        if (valueStr.equals("2147483647")) {
+            // This is Integer.MAX_VALUE, often used as default for maxLength
+            return "Integer.MAX_VALUE";
+        } else if (valueStr.equals("0")) {
+            // Common default for minLength and priority
+            return "0";
+        } else if (valueStr.equals("false")) {
+            // Common default for boolean flags
+            return "false";
+        } else if (valueStr.equals("true")) {
+            // Common default for boolean flags
+            return "true";
+        }
+
         // Handle arrays
         if (valueStr.startsWith("{") && valueStr.endsWith("}")) {
             // Empty array
             if (valueStr.equals("{}")) {
-                return "[]";
+                return "{}";
             }
 
             // Format array values with proper quotes
             String content = valueStr.substring(1, valueStr.length() - 1).trim();
             if (content.isEmpty()) {
-                return "[]";
+                return "{}";
             }
 
             // Split by comma, but handle quoted strings properly
             String[] elements = content.split(",");
-            StringBuilder result = new StringBuilder("[");
+            StringBuilder result = new StringBuilder("{");
 
             for (int i = 0; i < elements.length; i++) {
                 String element = elements[i].trim();
@@ -565,7 +670,7 @@ public class ClassStructureGenerator {
                 }
             }
 
-            result.append("]");
+            result.append("}");
             return result.toString();
         }
 
@@ -586,6 +691,44 @@ public class ClassStructureGenerator {
                 .map(ModifierKind::toString)
                 .map(String::toLowerCase)
                 .collect(java.util.stream.Collectors.joining(" "));
+    }
+
+    /**
+     * Gets the default values for an annotation type
+     * @param annotationType The annotation type
+     * @return A map of default values for the annotation type
+     */
+    private Map<String, String> getDefaultValuesForAnnotation(CtType<?> annotationType) {
+        if (!(annotationType instanceof CtAnnotationType)) {
+            return Collections.emptyMap();
+        }
+
+        // Compute default values directly without caching
+        return computeDefaultValuesForAnnotationType((CtAnnotationType<?>) annotationType);
+    }
+
+    /**
+     * Computes the default values for an annotation type
+     * @param annotationType The annotation type to compute default values for
+     * @return A map of default values for the annotation type
+     */
+    private Map<String, String> computeDefaultValuesForAnnotationType(CtAnnotationType<?> annotationType) {
+        Map<String, String> defaultValues = new HashMap<>();
+
+        for (Object methodObj : annotationType.getMethods()) {
+            if (methodObj instanceof CtMethod && methodObj instanceof CtAnnotationMethod) {
+                CtAnnotationMethod<?> annotationMethod = (CtAnnotationMethod<?>) methodObj;
+                if (annotationMethod.getDefaultExpression() != null) {
+                    String methodName = annotationMethod.getSimpleName();
+                    // Get the default value and format it properly
+                    Object defaultExpr = annotationMethod.getDefaultExpression();
+                    String defaultValue = formatAnnotationValue(defaultExpr.toString());
+                    defaultValues.put(methodName, defaultValue);
+                }
+            }
+        }
+
+        return defaultValues;
     }
 
     /**

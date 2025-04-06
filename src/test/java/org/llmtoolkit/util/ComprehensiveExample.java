@@ -230,8 +230,10 @@ public class ComprehensiveExample {
     }
 
     public static void main(String[] args) {
-        System.out.println("ClassToString:\n");
-        System.out.println(ClassToString.toString(ComprehensiveExample.class, true, false));
+        /*
+                System.out.println("ClassToString:\n");
+                System.out.println(ClassToString.toString(ComprehensiveExample.class, true, false));
+        */
 
         System.out.println("\nClassStructureGenerator:\n");
         System.out.println(new ClassStructureGenerator().generateClassStructure(ComprehensiveExample.class));
