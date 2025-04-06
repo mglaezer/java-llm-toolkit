@@ -717,22 +717,20 @@ public class ClassToString {
         String methodIndent = SINGLE_INDENT;
         int modifiers = method.getModifiers();
 
-        // For interface methods, remove public modifier as it's implicit
+        // For interface methods, remove the public modifier as it's implicit
         if (isInterface) {
             modifiers &= ~Modifier.PUBLIC;
         }
 
-        // Get all annotations including inherited ones
+        // Collect all annotations
         Set<Annotation> allAnnotations = new LinkedHashSet<>();
         Collections.addAll(allAnnotations, method.getAnnotations());
 
-        // Check for @Override
+        // Check for @Override by searching superclasses and interfaces
+        boolean isOverride = false;
         String methodName = method.getName();
         Class<?>[] paramTypes = method.getParameterTypes();
-
-        // Check superclass for override
         Class<?> superclass = method.getDeclaringClass().getSuperclass();
-        boolean isOverride = false;
         while (superclass != null && !isOverride) {
             try {
                 superclass.getDeclaredMethod(methodName, paramTypes);
@@ -741,8 +739,6 @@ public class ClassToString {
                 superclass = superclass.getSuperclass();
             }
         }
-
-        // Check interfaces for override
         if (!isOverride) {
             for (Class<?> iface : method.getDeclaringClass().getInterfaces()) {
                 try {
@@ -753,24 +749,21 @@ public class ClassToString {
                 }
             }
         }
-
-        // Add @Override if method is actually overriding
         if (isOverride) {
             sb.append(methodIndent).append("@Override\n");
         }
-
-        // Add other annotations
         for (Annotation annotation : allAnnotations) {
             sb.append(methodIndent).append(formatAnnotation(annotation)).append("\n");
         }
-
         sb.append(methodIndent);
 
-        // Remove TRANSIENT as it's not valid for methods, but appears in some cases
+        // Remove TRANSIENT as it's not valid for methods
         modifiers &= ~Modifier.TRANSIENT;
 
-        // Handle default methods in interfaces
+        // Detect default method using reflection
+        boolean isDefaultMethod = isInterface && method.isDefault();
 
+        // For interface methods, remove the abstract modifier as it is implicit
         if (isInterface) {
             modifiers &= ~Modifier.ABSTRACT;
         }
@@ -780,17 +773,18 @@ public class ClassToString {
             sb.append(modifierStr).append(" ");
         }
 
-        // Add 'default' keyword for default methods in interfaces
+        // Add the 'default' keyword if this is a default interface method
+        if (isDefaultMethod) {
+            sb.append("default ");
+        }
 
-        // Handle generic type parameters for methods
+        // Handle generic type parameters for the method
         TypeVariable<?>[] typeParameters = method.getTypeParameters();
         if (typeParameters.length > 0) {
             sb.append("<");
             for (int i = 0; i < typeParameters.length; i++) {
                 TypeVariable<?> typeVar = typeParameters[i];
                 sb.append(typeVar.getName());
-
-                // Add bounds if present
                 Type[] bounds = typeVar.getBounds();
                 if (bounds.length > 0 && !bounds[0].equals(Object.class)) {
                     sb.append(" extends ");
@@ -801,7 +795,6 @@ public class ClassToString {
                         }
                     }
                 }
-
                 if (i < typeParameters.length - 1) {
                     sb.append(", ");
                 }
@@ -809,10 +802,12 @@ public class ClassToString {
             sb.append("> ");
         }
 
+        // Append return type and method name
         sb.append(getTypeName(method.getGenericReturnType(), qualifyNestedClassNames))
-                .append(" ")
-                .append(method.getName());
+                .append(" ");
+        sb.append(method.getName());
 
+        // Append parameters with varargs check
         sb.append("(");
         Parameter[] parameters = method.getParameters();
         for (int i = 0; i < parameters.length; i++) {
@@ -820,44 +815,41 @@ public class ClassToString {
             for (Annotation annotation : param.getAnnotations()) {
                 sb.append(formatAnnotation(annotation)).append(" ");
             }
-            sb.append(getTypeName(param.getParameterizedType(), qualifyNestedClassNames));
-
-            // Handle varargs parameters
-            if (i == parameters.length - 1 && method.isVarArgs()) {
-                // Replace the last [] with ... for varargs
-                int lastBracketIndex = sb.lastIndexOf("[");
-                if (lastBracketIndex >= 0) {
-                    sb.delete(lastBracketIndex, lastBracketIndex + 2);
-                    sb.append("...");
+            int paramModifiers = param.getModifiers();
+            if (paramModifiers != 0) {
+                sb.append(Modifier.toString(paramModifiers)).append(" ");
+            }
+            String typeName = getTypeName(param.getParameterizedType(), qualifyNestedClassNames);
+            if (param.isVarArgs()) {
+                if (typeName.endsWith("[]")) {
+                    typeName = typeName.substring(0, typeName.length() - 2) + "...";
                 }
             }
-
-            sb.append(" ").append(param.getName());
+            sb.append(typeName).append(" ").append(param.getName());
             if (i < parameters.length - 1) {
                 sb.append(", ");
             }
         }
         sb.append(")");
 
-        // Determine if method should have implementation
-        // Regular class methods always have implementation
-        // Interface default methods
-        // Static methods
-        boolean needsImplementation = !isInterface
-                || Modifier.isStatic(modifiers)
-                || Modifier.isPrivate(modifiers); // Private interface methods
-
-        // Abstract methods never have implementation
-        if (Modifier.isAbstract(modifiers)) {
-            needsImplementation = false;
+        // Append throws clause if any
+        Class<?>[] exceptionTypes = method.getExceptionTypes();
+        if (exceptionTypes.length > 0) {
+            sb.append(" throws ");
+            for (int i = 0; i < exceptionTypes.length; i++) {
+                sb.append(getTypeName(exceptionTypes[i], qualifyNestedClassNames));
+                if (i < exceptionTypes.length - 1) {
+                    sb.append(", ");
+                }
+            }
         }
 
-        if (needsImplementation) {
-            sb.append(" { /* impl */ }");
+        // For interface abstract methods, add a semicolon; else, add an empty body
+        if (isInterface && !isDefaultMethod && !Modifier.isStatic(method.getModifiers())) {
+            sb.append(";\n");
         } else {
-            sb.append(";");
+            sb.append(" {}\n");
         }
-        sb.append("\n");
     }
 
     private static String formatParameter(Parameter param, boolean qualifyNestedClassNames) {
