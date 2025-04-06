@@ -139,7 +139,7 @@ public class ClassToString {
             Class<?> clazz, StringBuilder sb, boolean printMethods, boolean qualifyNestedClassNames) {
         // Add ALL annotations, including inherited ones
         appendAnnotations(clazz.getAnnotations(), sb);
-        appendModifiers(clazz.getModifiers(), sb, false);
+        appendModifiers(clazz.getModifiers(), sb, false, clazz);
         sb.append("record ").append(getTypeName(clazz, qualifyNestedClassNames));
         appendTypeParameters(clazz.getTypeParameters(), sb);
 
@@ -448,7 +448,7 @@ public class ClassToString {
         }
 
         appendAnnotations(interfaceClass.getAnnotations(), sb);
-        appendModifiers(interfaceClass.getModifiers(), sb, true);
+        appendModifiers(interfaceClass.getModifiers(), sb, true, interfaceClass);
         sb.append(interfaceClass.getSimpleName());
         appendTypeParameters(interfaceClass.getTypeParameters(), sb);
 
@@ -504,7 +504,7 @@ public class ClassToString {
     private static void generateEnumDefinition(
             Class<?> enumClass, StringBuilder sb, boolean printMethods, boolean qualifyNestedClassNames) {
         appendAnnotations(enumClass.getAnnotations(), sb);
-        appendModifiers(enumClass.getModifiers() & ~Modifier.FINAL, sb, false);
+        appendModifiers(enumClass.getModifiers() & ~Modifier.FINAL, sb, false, enumClass);
         sb.append("enum ").append(getTypeName(enumClass, qualifyNestedClassNames));
         appendInterfaces(enumClass.getInterfaces(), sb);
         sb.append(" {\n");
@@ -555,7 +555,7 @@ public class ClassToString {
     private static void generateRegularClassDefinition(
             Class<?> clazz, StringBuilder sb, boolean printMethods, boolean qualifyNestedClassNames) {
         appendAnnotations(clazz.getAnnotations(), sb);
-        appendModifiers(clazz.getModifiers(), sb, false);
+        appendModifiers(clazz.getModifiers(), sb, false, clazz);
         sb.append("class ").append(getTypeName(clazz, qualifyNestedClassNames));
         appendTypeParameters(clazz.getTypeParameters(), sb);
 
@@ -641,12 +641,17 @@ public class ClassToString {
         }
     }
 
-    private static void appendModifiers(int modifiers, StringBuilder sb, boolean isInterface) {
-        String modifierStr = Modifier.toString(modifiers);
-        // Remove redundant 'abstract' modifier for interfaces
+    private static void appendModifiers(int modifiers, StringBuilder sb, boolean isInterface, Class<?> clazz) {
         if (isInterface) {
-            modifierStr = modifierStr.replace("abstract interface", "interface");
+            // For interfaces, only remove abstract, keep public
+            modifiers &= ~Modifier.ABSTRACT;
+        } else if (clazz != null && clazz.isRecord()) {
+            // For records, only remove final, keep public and other modifiers like static
+            modifiers &= ~Modifier.FINAL;
         }
+
+        // Get the modifier string after removing implicit ones
+        String modifierStr = Modifier.toString(modifiers);
 
         if (!modifierStr.isEmpty()) {
             sb.append(ClassToString.BASE_INDENT).append(modifierStr).append(" ");
@@ -698,7 +703,7 @@ public class ClassToString {
 
         // Add modifiers
         sb.append(SINGLE_INDENT);
-        appendModifiers(field.getModifiers(), sb, false);
+        appendModifiers(field.getModifiers(), sb, false, null);
 
         // Add type and name
         sb.append(getTypeName(field.getGenericType(), false))
@@ -711,11 +716,10 @@ public class ClassToString {
             Method method, StringBuilder sb, boolean qualifyNestedClassNames, boolean isInterface) {
         String methodIndent = SINGLE_INDENT;
         int modifiers = method.getModifiers();
-        Class<?> declaringClass = method.getDeclaringClass();
 
-        // Skip record component accessors
-        if (declaringClass.isRecord() && isRecordGeneratedMethod(method, declaringClass)) {
-            return;
+        // For interface methods, remove public modifier as it's implicit
+        if (isInterface) {
+            modifiers &= ~Modifier.PUBLIC;
         }
 
         // Get all annotations including inherited ones
@@ -727,7 +731,7 @@ public class ClassToString {
         Class<?>[] paramTypes = method.getParameterTypes();
 
         // Check superclass for override
-        Class<?> superclass = declaringClass.getSuperclass();
+        Class<?> superclass = method.getDeclaringClass().getSuperclass();
         boolean isOverride = false;
         while (superclass != null && !isOverride) {
             try {
@@ -740,7 +744,7 @@ public class ClassToString {
 
         // Check interfaces for override
         if (!isOverride) {
-            for (Class<?> iface : declaringClass.getInterfaces()) {
+            for (Class<?> iface : method.getDeclaringClass().getInterfaces()) {
                 try {
                     iface.getDeclaredMethod(methodName, paramTypes);
                     isOverride = true;
@@ -766,12 +770,8 @@ public class ClassToString {
         modifiers &= ~Modifier.TRANSIENT;
 
         // Handle default methods in interfaces
-        boolean isDefault = isInterface
-                && (modifiers & Modifier.PUBLIC) != 0
-                && !Modifier.isStatic(modifiers)
-                && !Modifier.isAbstract(modifiers);
 
-        if (isInterface && !isDefault) {
+        if (isInterface) {
             modifiers &= ~Modifier.ABSTRACT;
         }
 
@@ -781,9 +781,6 @@ public class ClassToString {
         }
 
         // Add 'default' keyword for default methods in interfaces
-        if (isDefault) {
-            sb.append("default ");
-        }
 
         // Handle generic type parameters for methods
         TypeVariable<?>[] typeParameters = method.getTypeParameters();
@@ -843,13 +840,12 @@ public class ClassToString {
         sb.append(")");
 
         // Determine if method should have implementation
+        // Regular class methods always have implementation
+        // Interface default methods
+        // Static methods
         boolean needsImplementation = !isInterface
-                || // Regular class methods always have implementation
-                isDefault
-                || // Interface default methods
-                Modifier.isStatic(modifiers)
-                || // Static methods
-                Modifier.isPrivate(modifiers); // Private interface methods
+                || Modifier.isStatic(modifiers)
+                || Modifier.isPrivate(modifiers); // Private interface methods
 
         // Abstract methods never have implementation
         if (Modifier.isAbstract(modifiers)) {
