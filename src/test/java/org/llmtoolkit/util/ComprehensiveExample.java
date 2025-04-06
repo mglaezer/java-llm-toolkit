@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
+import org.junit.jupiter.api.Test;
 
 /**
  * A comprehensive example demonstrating ClassToString2 with various Java features:
@@ -229,12 +230,8 @@ public class ComprehensiveExample {
         }
     }
 
-    public static void main(String[] args) {
-        /*
-                System.out.println("ClassToString:\n");
-                System.out.println(ClassToString.toString(ComprehensiveExample.class, true, false));
-        */
-
+    @Test
+    void testComprehensiveExample() {
         System.out.println("\nClassStructureGenerator:\n");
         System.out.println(new ClassStructureGenerator().generateClassStructure(ComprehensiveExample.class));
     }

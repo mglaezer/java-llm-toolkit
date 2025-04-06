@@ -200,17 +200,27 @@ public class ClassStructureGenerator {
 
                     // Parameters
                     List<CtParameter<?>> parameters = method.getParameters();
-                    for (int i = 0; i < parameters.size(); i++) {
-                        CtParameter<?> param = parameters.get(i);
+                    if (parameters.size() > 1) {
+                        // Multi-line parameter format for methods with multiple parameters
+                        for (int i = 0; i < parameters.size(); i++) {
+                            CtParameter<?> param = parameters.get(i);
+                            if (i > 0) {
+                                output.append(",\n                ");
+                            }
+                            output.append(formatAnnotations(param.getAnnotations()))
+                                    .append(" ")
+                                    .append(formatTypeReference(param.getType()))
+                                    .append(" ")
+                                    .append(param.getSimpleName());
+                        }
+                    } else if (parameters.size() == 1) {
+                        // Single-line format for methods with one parameter
+                        CtParameter<?> param = parameters.get(0);
                         output.append(formatAnnotations(param.getAnnotations()))
                                 .append(" ")
                                 .append(formatTypeReference(param.getType()))
                                 .append(" ")
                                 .append(param.getSimpleName());
-
-                        if (i < parameters.size() - 1) {
-                            output.append(", ");
-                        }
                     }
                     output.append(")");
 
@@ -264,17 +274,27 @@ public class ClassStructureGenerator {
 
                     // Constructor parameters
                     List<CtParameter<?>> parameters = constructor.getParameters();
-                    for (int i = 0; i < parameters.size(); i++) {
-                        CtParameter<?> param = parameters.get(i);
+                    if (parameters.size() > 1) {
+                        // Multi-line parameter format for constructors with multiple parameters
+                        for (int i = 0; i < parameters.size(); i++) {
+                            CtParameter<?> param = parameters.get(i);
+                            if (i > 0) {
+                                output.append(",\n                ");
+                            }
+                            output.append(formatAnnotations(param.getAnnotations()))
+                                    .append(" ")
+                                    .append(formatTypeReference(param.getType()))
+                                    .append(" ")
+                                    .append(param.getSimpleName());
+                        }
+                    } else if (parameters.size() == 1) {
+                        // Single-line format for constructors with one parameter
+                        CtParameter<?> param = parameters.get(0);
                         output.append(formatAnnotations(param.getAnnotations()))
                                 .append(" ")
                                 .append(formatTypeReference(param.getType()))
                                 .append(" ")
                                 .append(param.getSimpleName());
-
-                        if (i < parameters.size() - 1) {
-                            output.append(", ");
-                        }
                     }
                     output.append(") {}");
 
@@ -319,17 +339,27 @@ public class ClassStructureGenerator {
 
                 // Parameters
                 List<CtParameter<?>> parameters = method.getParameters();
-                for (int i = 0; i < parameters.size(); i++) {
-                    CtParameter<?> param = parameters.get(i);
+                if (parameters.size() > 1) {
+                    // Multi-line parameter format for methods with multiple parameters
+                    for (int i = 0; i < parameters.size(); i++) {
+                        CtParameter<?> param = parameters.get(i);
+                        if (i > 0) {
+                            output.append(",\n                ");
+                        }
+                        output.append(formatAnnotations(param.getAnnotations()))
+                                .append(" ")
+                                .append(formatTypeReference(param.getType()))
+                                .append(" ")
+                                .append(param.getSimpleName());
+                    }
+                } else if (parameters.size() == 1) {
+                    // Single-line format for methods with one parameter
+                    CtParameter<?> param = parameters.get(0);
                     output.append(formatAnnotations(param.getAnnotations()))
                             .append(" ")
                             .append(formatTypeReference(param.getType()))
                             .append(" ")
                             .append(param.getSimpleName());
-
-                    if (i < parameters.size() - 1) {
-                        output.append(", ");
-                    }
                 }
                 output.append(")");
 
@@ -433,6 +463,14 @@ public class ClassStructureGenerator {
                         return "@" + simpleName;
                     }
 
+                    // Get the annotation's default values
+                    final Map<String, String> defaultValues;
+                    if (annotationType instanceof CtAnnotationType) {
+                        defaultValues = getDefaultValuesForAnnotation(annotationType);
+                    } else {
+                        defaultValues = new HashMap<>();
+                    }
+
                     // Sort annotation values to match ClassToString order (value first, then others)
                     Map<String, Object> sortedValues = new LinkedHashMap<>();
 
@@ -441,168 +479,47 @@ public class ClassStructureGenerator {
                         sortedValues.put("value", annotation.getValues().get("value"));
                     }
 
-                    // Add other values in alphabetical order
+                    // Add other values in alphabetical order, but skip default values
                     annotation.getValues().entrySet().stream()
                             .filter(entry -> !entry.getKey().equals("value"))
+                            .filter(entry -> {
+                                // Skip default values
+                                String key = entry.getKey();
+                                Object value = entry.getValue();
+                                String valueStr = formatAnnotationValue(value);
+
+                                // If this is a default value, skip it
+                                if (defaultValues.containsKey(key)
+                                        && defaultValues.get(key).equals(valueStr)) {
+                                    return false;
+                                }
+
+                                // If this is an empty array, skip it (common default)
+                                if (valueStr.equals("{}") || valueStr.equals("[]")) {
+                                    return false;
+                                }
+
+                                return true;
+                            })
                             .sorted(Map.Entry.comparingByKey())
                             .forEach(entry -> sortedValues.put(entry.getKey(), entry.getValue()));
 
-                    // Special case for @Validate - only show non-default parameters
-                    if (simpleName.equals("Validate")) {
-                        // Filter out default values
-                        Map<String, Object> nonDefaultValues = new LinkedHashMap<>();
-                        for (Map.Entry<String, Object> entry : sortedValues.entrySet()) {
-                            String key = entry.getKey();
-                            Object value = entry.getValue();
+                    // We've already filtered out default values above, so we can use sortedValues directly
 
-                            // Skip default values
-                            if ((key.equals("maxLength") && value.toString().equals("2147483647"))
-                                    || (key.equals("minLength")
-                                            && value.toString().equals("0"))
-                                    || (key.equals("nullable")
-                                            && value.toString().equals("false"))) {
-                                continue;
-                            }
-
-                            nonDefaultValues.put(key, value);
-                        }
-
-                        // If no non-default parameters are specified, just show @Validate
-                        if (nonDefaultValues.isEmpty()) {
-                            return "@" + simpleName;
-                        }
-
-                        String values = nonDefaultValues.entrySet().stream()
-                                .map(entry -> {
-                                    String key = entry.getKey();
-                                    Object value = entry.getValue();
-                                    return key + " = " + formatAnnotationValue(value);
-                                })
-                                .collect(java.util.stream.Collectors.joining(", "));
-
-                        return "@" + simpleName + "(" + values + ")";
-                    }
-
-                    // Special case for @Entity - don't show default values
-                    if (simpleName.equals("Entity")) {
-                        // Filter out default values
-                        Map<String, Object> nonDefaultValues = new LinkedHashMap<>();
-                        for (Map.Entry<String, Object> entry : sortedValues.entrySet()) {
-                            String key = entry.getKey();
-                            Object value = entry.getValue();
-
-                            // Skip default values
-                            if ((key.equals("audited") && value.toString().equals("false"))) {
-                                continue;
-                            }
-
-                            nonDefaultValues.put(key, value);
-                        }
-
-                        String values = nonDefaultValues.entrySet().stream()
-                                .map(entry -> {
-                                    String key = entry.getKey();
-                                    Object value = entry.getValue();
-                                    return key + " = " + formatAnnotationValue(value);
-                                })
-                                .collect(java.util.stream.Collectors.joining(", "));
-
-                        return "@" + simpleName + "(" + values + ")";
-                    }
-
-                    // Get or compute default values for this annotation type
-                    Map<String, String> defaultsForType = getDefaultValuesForAnnotation(annotationType);
-
-                    // Check if all values are default values
-                    boolean allDefaultValues = true;
-
-                    if (!defaultsForType.isEmpty()) {
-                        for (Map.Entry<String, Object> entry : sortedValues.entrySet()) {
-                            String key = entry.getKey();
-                            String value = formatAnnotationValue(entry.getValue());
-
-                            // If this value is not a default value, we need to show the annotation
-                            if (!defaultsForType.containsKey(key)
-                                    || !defaultsForType.get(key).equals(value)) {
-                                allDefaultValues = false;
-                                break;
-                            }
-                        }
-
-                        // If all values are default values and we have at least one value, just show the annotation
-                        // name
-                        if (allDefaultValues && !sortedValues.isEmpty()) {
-                            return "@" + simpleName;
-                        }
+                    // If no parameters are specified, just show the annotation name
+                    if (sortedValues.isEmpty()) {
+                        return "@" + simpleName;
                     }
 
                     String values = sortedValues.entrySet().stream()
                             .map(entry -> {
                                 String key = entry.getKey();
                                 Object value = entry.getValue();
-
-                                // Skip null values
-                                if (value == null) {
-                                    return null;
-                                }
-
-                                // For empty arrays, show as {}
-                                if (value.toString().equals("{}")) {
-                                    return key + " = {}";
-                                }
-
-                                // Check if this is a default value for annotation methods
-                                if (annotationType instanceof CtAnnotationType) {
-                                    CtAnnotationType annotationTypeDecl = (CtAnnotationType) annotationType;
-
-                                    // Try to find the annotation method with this name
-                                    for (Object methodObj : annotationTypeDecl.getMethods()) {
-                                        if (methodObj instanceof CtMethod) {
-                                            CtMethod<?> method = (CtMethod<?>) methodObj;
-                                            if (method.getSimpleName().equals(key)
-                                                    && method instanceof CtAnnotationMethod) {
-                                                CtAnnotationMethod<?> annotationMethod = (CtAnnotationMethod<?>) method;
-                                                if (annotationMethod.getDefaultExpression() != null) {
-                                                    String defaultValue = annotationMethod
-                                                            .getDefaultExpression()
-                                                            .toString();
-                                                    String currentValue = value.toString();
-
-                                                    // If the current value equals the default value, skip it
-                                                    if (defaultValue.equals(currentValue)
-                                                            || (defaultValue
-                                                                    .replaceAll("\\s", "")
-                                                                    .equals(currentValue.replaceAll("\\s", "")))) {
-                                                        return null;
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-
-                                // Format the value properly
-                                String formattedValue = formatAnnotationValue(value);
-
-                                // Don't show priority = 0 as it's not in the original code
-                                if (key.equals("priority") && formattedValue.equals("0")) {
-                                    return null;
-                                }
-
-                                // For arrays with ElementType values, use proper Java syntax
-                                if (key.equals("value") && simpleName.equals("Target")) {
-                                    formattedValue = formattedValue
-                                            .replace("[", "{ElementType.")
-                                            .replace("]", "}")
-                                            .replace(", ", ", ElementType.");
-                                }
-
-                                return key + " = " + formattedValue;
+                                return key + " = " + formatAnnotationValue(value);
                             })
-                            .filter(s -> s != null)
                             .collect(java.util.stream.Collectors.joining(", "));
 
-                    return "@" + simpleName + (values.isEmpty() ? "" : "(" + values + ")");
+                    return "@" + simpleName + "(" + values + ")";
                 })
                 .collect(java.util.stream.Collectors.joining(" "));
     }
@@ -632,6 +549,9 @@ public class ClassStructureGenerator {
         } else if (valueStr.equals("true")) {
             // Common default for boolean flags
             return "true";
+        } else if (valueStr.equals("{}")) {
+            // Empty array
+            return "{}";
         }
 
         // Handle arrays
@@ -723,6 +643,8 @@ public class ClassStructureGenerator {
                     // Get the default value and format it properly
                     Object defaultExpr = annotationMethod.getDefaultExpression();
                     String defaultValue = formatAnnotationValue(defaultExpr.toString());
+
+                    // Store the default value without any special handling
                     defaultValues.put(methodName, defaultValue);
                 }
             }
