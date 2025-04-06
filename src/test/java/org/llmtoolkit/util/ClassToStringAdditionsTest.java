@@ -12,7 +12,8 @@ import org.junit.jupiter.api.Test;
  * Additional tests for ClassToString to cover edge cases and features
  * that might not be covered in the original tests.
  */
-public class ClassToStringAdditions {
+@SuppressWarnings({"unused", "Convert2Lambda", "LombokGetterMayBeUsed", "unchecked", "FieldCanBeLocal"})
+public class ClassToStringAdditionsTest {
 
     // Test annotations
     @Retention(RetentionPolicy.RUNTIME)
@@ -259,12 +260,12 @@ public class ClassToStringAdditions {
     @Test
     void testNestedClassesAndInterfaces() {
         String result = ClassToString.toString(OuterClass.class, true, true);
-        assertTrue(result.contains("class ClassToStringAdditions.OuterClass"));
+        assertTrue(result.contains("class ClassToStringAdditionsTest.OuterClass"));
         // Check for the presence of nested classes, but be more flexible with the format
-        assertTrue(result.contains("ClassToStringAdditions.OuterClass.NestedClass"));
+        assertTrue(result.contains("ClassToStringAdditionsTest.OuterClass.NestedClass"));
         assertTrue(result.contains("interface NestedInterface"));
-        assertTrue(result.contains("ClassToStringAdditions.OuterClass.NestedRecord"));
-        assertTrue(result.contains("ClassToStringAdditions.OuterClass.NestedEnum"));
+        assertTrue(result.contains("ClassToStringAdditionsTest.OuterClass.NestedRecord"));
+        assertTrue(result.contains("ClassToStringAdditionsTest.OuterClass.NestedEnum"));
     }
 
     static class OuterClass {
