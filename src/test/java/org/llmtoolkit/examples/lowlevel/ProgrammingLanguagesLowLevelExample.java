@@ -1,8 +1,8 @@
 package org.llmtoolkit.examples.lowlevel;
 
-import org.llmtoolkit.core.BasicLLM;
-import org.llmtoolkit.core.CommonLLMs;
-import org.llmtoolkit.core.CommonProviders;
+import org.llmtoolkit.basicllm.BasicLLM;
+import org.llmtoolkit.basicllm.CommonLLMs;
+import org.llmtoolkit.basicllm.CommonProviders;
 import org.llmtoolkit.core.OutputInstructions;
 import org.llmtoolkit.examples.ProgrammingLanguages;
 import org.llmtoolkit.util.json.SerObject;

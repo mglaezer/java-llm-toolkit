@@ -1,13 +1,9 @@
-package org.llmtoolkit.core;
+package org.llmtoolkit.basicllm;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import lombok.NonNull;
 import lombok.experimental.UtilityClass;
-import org.llmtoolkit.providers.chatmodel.AnthropicChatModelProvider;
-import org.llmtoolkit.providers.chatmodel.ChatModelProvider;
-import org.llmtoolkit.providers.chatmodel.GoogleChatModelProvider;
-import org.llmtoolkit.providers.chatmodel.OpenAiChatModelProvider;
 import org.llmtoolkit.util.Env;
 
 /**

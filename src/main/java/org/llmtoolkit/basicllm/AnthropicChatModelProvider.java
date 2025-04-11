@@ -1,9 +1,8 @@
-package org.llmtoolkit.providers.chatmodel;
+package org.llmtoolkit.basicllm;
 
 import dev.langchain4j.model.anthropic.AnthropicChatModel;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import java.time.Duration;
-import org.llmtoolkit.core.BasicLLM;
 
 public class AnthropicChatModelProvider implements ChatModelProvider {
     private final String apiKey;

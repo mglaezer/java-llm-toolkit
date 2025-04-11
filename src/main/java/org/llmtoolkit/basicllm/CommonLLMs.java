@@ -1,4 +1,4 @@
-package org.llmtoolkit.core;
+package org.llmtoolkit.basicllm;
 
 import lombok.experimental.UtilityClass;
 

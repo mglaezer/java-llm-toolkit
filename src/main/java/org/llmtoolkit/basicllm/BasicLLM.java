@@ -1,4 +1,4 @@
-package org.llmtoolkit.core;
+package org.llmtoolkit.basicllm;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
@@ -6,7 +6,6 @@ import dev.langchain4j.model.chat.ChatLanguageModel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NonNull;
-import org.llmtoolkit.providers.chatmodel.ChatModelProvider;
 
 /**
  * A simplified factory for creating ChatLanguageModel instances with commonly used parameters.
