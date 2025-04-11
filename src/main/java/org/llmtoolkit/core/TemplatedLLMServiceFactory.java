@@ -127,7 +127,7 @@ public class TemplatedLLMServiceFactory {
     }
 
     private static void printPrompt(String wholePrompt) {
-        log.debug("Prompt:\n{}", wholePrompt);
+        log.info("Prompt:\n{}", wholePrompt);
     }
 
     private static void printAnswer(String answer) {

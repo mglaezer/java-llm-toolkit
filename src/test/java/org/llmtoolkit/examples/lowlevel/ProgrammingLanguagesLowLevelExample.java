@@ -6,16 +6,18 @@ import org.llmtoolkit.core.OutputInstructions;
 import org.llmtoolkit.examples.ProgrammingLanguages;
 import org.llmtoolkit.util.Env;
 import org.llmtoolkit.util.json.SerObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ProgrammingLanguagesLowLevelExample {
+    private static final Logger LOG = LoggerFactory.getLogger(ProgrammingLanguagesLowLevelExample.class);
 
     /*
      * This example demonstrates how to use the low-level API to get structured output from LLM.
      */
     public static void main(String[] args) {
-
         String outputInstructions = OutputInstructions.singleObjectInstructions(ProgrammingLanguages.class);
-        System.out.println("OUTPUT INSTRUCTIONS:\n" + outputInstructions);
+        LOG.info("\nOUTPUT INSTRUCTIONS:\n{}", outputInstructions);
 
         String jsonAnswer = OpenAiChatModel.builder()
                 .modelName(CommonLLMs.GPT_4O)
@@ -28,6 +30,6 @@ public class ProgrammingLanguagesLowLevelExample {
 
         SerObject<ProgrammingLanguages> serLanguages = SerObject.from(jsonAnswer, ProgrammingLanguages.class);
 
-        System.out.print("ANSWER:\n" + serLanguages.toYaml());
+        LOG.info("\nANSWER:\n{}", serLanguages.toYaml());
     }
 }
