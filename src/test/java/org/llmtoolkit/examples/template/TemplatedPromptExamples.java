@@ -7,6 +7,7 @@ import gg.jte.resolve.DirectoryCodeResolver;
 import java.nio.file.Path;
 import java.util.List;
 import org.llmtoolkit.basicllm.CommonLLMs;
+import org.llmtoolkit.core.JteTemplatingEngine;
 import org.llmtoolkit.core.TemplatedLLMServiceFactory;
 import org.llmtoolkit.core.annotations.PP;
 import org.llmtoolkit.core.annotations.PT;
@@ -85,10 +86,10 @@ public class TemplatedPromptExamples {
     private static void demoLangchainAiServices_returningObject() {
         ProgrammingLanguagesService service = TemplatedLLMServiceFactory.builder()
                 .model(MODEL)
+                .templatingEngine(JteTemplatingEngine.create(TEMPLATES_ROOT))
                 .aiServiceCustomizer(aiServices -> {
                     /* Put rag, memory, tools, etc. here */
                 })
-                .codeResolver(TEMPLATES_ROOT)
                 .build()
                 .create(ProgrammingLanguagesService.class);
 
@@ -100,7 +101,7 @@ public class TemplatedPromptExamples {
     private static void demoLangchainAiServices_returningList() {
         ProgrammingLanguagesService service = TemplatedLLMServiceFactory.builder()
                 .model(MODEL)
-                .codeResolver(TEMPLATES_ROOT)
+                .templatingEngine(JteTemplatingEngine.create(TEMPLATES_ROOT))
                 .build()
                 .create(ProgrammingLanguagesService.class);
 
@@ -112,7 +113,7 @@ public class TemplatedPromptExamples {
     private static void demoBasicLLM_returningString() {
         ProgrammingLanguagesService service = TemplatedLLMServiceFactory.builder()
                 .model(MODEL)
-                .codeResolver(TEMPLATES_ROOT)
+                .templatingEngine(JteTemplatingEngine.create(TEMPLATES_ROOT))
                 .build()
                 .create(ProgrammingLanguagesService.class);
 
