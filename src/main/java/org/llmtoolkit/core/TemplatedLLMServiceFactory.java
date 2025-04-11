@@ -49,30 +49,23 @@ public class TemplatedLLMServiceFactory {
         initializeIfNeeded();
         validateInterface(serviceInterface);
         return (T) Proxy.newProxyInstance(
-                serviceInterface.getClassLoader(),
-                new Class<?>[] {serviceInterface},
-                new PromptInvocationHandler(serviceInterface));
+                serviceInterface.getClassLoader(), new Class<?>[] {serviceInterface}, new PromptInvocationHandler());
     }
 
     private <T> void validateInterface(Class<T> serviceInterface) {
         for (Method method : serviceInterface.getDeclaredMethods()) {
             if (method.getDeclaringClass() != Object.class && method.isAnnotationPresent(PT.class)) {
-                validateMethod(method, serviceInterface);
+                validateMethod(method);
             }
         }
     }
 
-    private void validateMethod(Method method, Class<?> serviceInterface) {
+    private void validateMethod(Method method) {
         extractValueType(method.getGenericReturnType()); // Will throw if invalid
-        templateProcessor.validateTemplate(method, serviceInterface.getPackage());
+        templateProcessor.validateTemplate(method);
     }
 
     private class PromptInvocationHandler implements InvocationHandler {
-        private final Class<?> serviceInterface;
-
-        private PromptInvocationHandler(Class<?> serviceInterface) {
-            this.serviceInterface = serviceInterface;
-        }
 
         @Override
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
@@ -80,7 +73,7 @@ public class TemplatedLLMServiceFactory {
                 return method.invoke(this, args);
             }
 
-            String prompt = templateProcessor.preparePrompt(method, args, serviceInterface.getPackage());
+            String prompt = templateProcessor.preparePrompt(method, args);
             return processPrompt(method, prompt);
         }
 

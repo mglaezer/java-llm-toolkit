@@ -13,29 +13,28 @@ import org.llmtoolkit.core.annotations.PT;
 
 public class JteTemplateProcessor implements TemplateProcessor {
 
-    private final CodeResolver codeResolver;
-    private TemplateEngine templateEngine;
+    private final TemplateEngine templateEngine;
 
     public static JteTemplateProcessor create(CodeResolver codeResolver) {
         return new JteTemplateProcessor(codeResolver);
     }
 
     private JteTemplateProcessor(CodeResolver codeResolver) {
-        this.codeResolver = codeResolver;
+        this.templateEngine = TemplateEngine.create(codeResolver, ContentType.Plain);
     }
 
-    private void initializeIfNeeded() {
-        if (templateEngine == null) {
-            templateEngine = TemplateEngine.create(codeResolver, ContentType.Plain);
+    private String getTemplatePath(Method method) {
+        String packagePath = method.getDeclaringClass().getPackage().getName().replace('.', '/');
+        PT promptAnnotation = method.getAnnotation(PT.class);
+        if (promptAnnotation == null) {
+            throw new IllegalStateException("Method must be annotated with @" + PT.class.getSimpleName());
         }
+        return packagePath + "/" + promptAnnotation.templatePath();
     }
 
     @Override
-    public void validateTemplate(Method method, Package basePackage) {
-        initializeIfNeeded();
-        String packagePath = basePackage.getName().replace('.', '/');
-        String templatePath = resolveTemplatePath(method, packagePath);
-
+    public void validateTemplate(Method method) {
+        String templatePath = getTemplatePath(method);
         Map<String, Class<?>> templateParams = templateEngine.getParamInfo(templatePath);
         if (templateParams == null) {
             throw new IllegalArgumentException("Template not found: " + templatePath);
@@ -51,7 +50,6 @@ public class JteTemplateProcessor implements TemplateProcessor {
             throw new IllegalArgumentException("All parameters must be annotated with @PP");
         }
 
-        // Check for missing/extra parameters
         Set<String> missingParams = new HashSet<>(templateParams.keySet());
         missingParams.removeAll(declaredParams);
 
@@ -71,23 +69,13 @@ public class JteTemplateProcessor implements TemplateProcessor {
     }
 
     @Override
-    public String preparePrompt(Method method, Object[] args, Package basePackage) {
-        initializeIfNeeded();
-        String packagePath = basePackage.getName().replace('.', '/');
-        String templatePath = resolveTemplatePath(method, packagePath);
+    public String preparePrompt(Method method, Object[] args) {
+        String templatePath = getTemplatePath(method);
         Map<String, Object> params = extractParameters(method, args);
 
         StringOutput output = new StringOutput();
         templateEngine.render(templatePath, params, output);
         return output.toString();
-    }
-
-    private String resolveTemplatePath(Method method, String packagePath) {
-        PT promptAnnotation = method.getAnnotation(PT.class);
-        if (promptAnnotation == null) {
-            throw new IllegalStateException("Method must be annotated with @" + PT.class.getSimpleName());
-        }
-        return packagePath + "/" + promptAnnotation.templatePath();
     }
 
     private Map<String, Object> extractParameters(Method method, Object[] args) {
