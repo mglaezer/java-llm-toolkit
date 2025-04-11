@@ -1,38 +1,47 @@
 package org.llmtoolkit.core;
 
+import dev.langchain4j.service.AiServices;
 import gg.jte.CodeResolver;
 import gg.jte.ContentType;
 import gg.jte.TemplateEngine;
 import gg.jte.output.StringOutput;
 import java.lang.reflect.*;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
+import lombok.Builder;
+import lombok.extern.slf4j.Slf4j;
 import org.llmtoolkit.core.annotations.PP;
 import org.llmtoolkit.core.annotations.PT;
 import org.llmtoolkit.util.Do;
 import org.llmtoolkit.util.json.JsonUtils;
 
+@Slf4j
+@Builder
 public class TemplatedLLMServiceFactory {
 
-    private final StringAnswer stringAnswer;
-    private final boolean isToPrintPrompt;
-    private final boolean isToPrintAnswer;
-    private final TemplateEngine templateEngine;
+    private Consumer<AiServices<StringAnswer>> builderCustomizer;
+    private CodeResolver codeResolver;
+    private boolean isToPrintPrompt;
+    private boolean isToPrintAnswer;
 
-    public TemplatedLLMServiceFactory(StringAnswer stringAnswer, CodeResolver codeResolver) {
-        this(stringAnswer, false, false, codeResolver);
-    }
+    private StringAnswer stringAnswer;
+    private TemplateEngine templateEngine;
 
-    public TemplatedLLMServiceFactory(
-            StringAnswer stringAnswer, boolean printPrompt, boolean printAnswer, CodeResolver codeResolver) {
-        this.stringAnswer = stringAnswer;
-        this.isToPrintPrompt = printPrompt;
-        this.isToPrintAnswer = printAnswer;
-        this.templateEngine = TemplateEngine.create(codeResolver, ContentType.Plain);
+    private synchronized void initializeIfNeeded() {
+        if (templateEngine == null) {
+            templateEngine = TemplateEngine.create(codeResolver, ContentType.Plain);
+        }
+        if (stringAnswer == null) {
+            AiServices<StringAnswer> baseBuilder = AiServices.builder(StringAnswer.class);
+            builderCustomizer.accept(baseBuilder);
+            stringAnswer = baseBuilder.build();
+        }
     }
 
     @SuppressWarnings("unchecked")
     public <T> T create(Class<T> serviceInterface) {
+        initializeIfNeeded();
         return (T) Proxy.newProxyInstance(
                 serviceInterface.getClassLoader(),
                 new Class<?>[] {serviceInterface},
@@ -119,11 +128,11 @@ public class TemplatedLLMServiceFactory {
     }
 
     private static void printPrompt(String wholePrompt) {
-        System.out.println("Prompt:\n" + wholePrompt);
+        log.info("Prompt:\n" + wholePrompt);
     }
 
     private static void printAnswer(String answer) {
-        System.out.println("Answer:\n" + answer);
+        log.info("Answer:\n" + answer);
     }
 
     private String preparePrompt(Method method, Object[] args, Package aPackage) {
