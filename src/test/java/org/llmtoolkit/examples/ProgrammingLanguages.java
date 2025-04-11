@@ -10,7 +10,7 @@ import org.springframework.lang.Nullable;
  * All annotations (including @Cue) are visible to the LLM and provide additional context.
  * While any annotation can be used, @Cue is recommended for consistency.
  *
- * Note: Inner records are used here only for example convenience rather than being in separate files.
+ * Note: Inner records are used here only for convenience rather than being in separate files.
  */
 public record ProgrammingLanguages(List<Language> languages) {
 
