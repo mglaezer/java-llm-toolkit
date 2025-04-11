@@ -4,10 +4,8 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import lombok.NonNull;
 import lombok.experimental.UtilityClass;
-import org.llmtoolkit.providers.AltOpenAiLLMProvider;
-import org.llmtoolkit.providers.CachingLLMProvider;
-import org.llmtoolkit.providers.LLMProvider;
 import org.llmtoolkit.providers.chatmodel.AnthropicChatModelProvider;
+import org.llmtoolkit.providers.chatmodel.ChatModelProvider;
 import org.llmtoolkit.providers.chatmodel.GoogleChatModelProvider;
 import org.llmtoolkit.providers.chatmodel.OpenAiChatModelProvider;
 import org.llmtoolkit.util.Env;
@@ -19,23 +17,15 @@ import org.llmtoolkit.util.Env;
  * However, this is an intentional trade-off to enable quick experimentation and easy switching
  * between providers during development and testing.
  */
+@SuppressWarnings("unused")
 @UtilityClass
 public class CommonProviders {
-    public static final Supplier<@NonNull LLMProvider> OPENAI = Suppliers.memoize(
-            () -> new CachingLLMProvider(new OpenAiChatModelProvider(null, Env.getRequired("OPENAI_API_KEY"))));
+    public static final Supplier<@NonNull ChatModelProvider> OPENAI =
+            Suppliers.memoize(() -> new OpenAiChatModelProvider(null, Env.getRequired("OPENAI_API_KEY")));
 
-    public static final Supplier<@NonNull LLMProvider> GROQ = Suppliers.memoize(() -> new CachingLLMProvider(
-            new OpenAiChatModelProvider("https://api.groq.com/openai/v1/", Env.getRequired("GROQ_API_KEY"))));
+    public static final Supplier<@NonNull ChatModelProvider> ANTHROPIC =
+            Suppliers.memoize(() -> new AnthropicChatModelProvider(Env.getRequired("ANTHROPIC_API_KEY")));
 
-    public static final Supplier<@NonNull LLMProvider> ANTHROPIC = Suppliers.memoize(
-            () -> new CachingLLMProvider(new AnthropicChatModelProvider(Env.getRequired("ANTHROPIC_API_KEY"))));
-
-    public static final Supplier<@NonNull LLMProvider> GOOGLE = Suppliers.memoize(
-            () -> new CachingLLMProvider(new GoogleChatModelProvider(Env.getRequired("GEMINI_API_KEY"))));
-
-    public static final Supplier<@NonNull LLMProvider> DEEPSEEK = Suppliers.memoize(
-            () -> new AltOpenAiLLMProvider("https://api.deepseek.com/v1", Env.getRequired("DEEPSEEK_API_KEY")));
-
-    public static final Supplier<@NonNull LLMProvider> INFERENCE = Suppliers.memoize(
-            () -> new AltOpenAiLLMProvider("https://api.inference.net/v1", Env.getRequired("INFERENCE_API_KEY")));
+    public static final Supplier<@NonNull ChatModelProvider> GOOGLE =
+            Suppliers.memoize(() -> new GoogleChatModelProvider(Env.getRequired("GEMINI_API_KEY")));
 }

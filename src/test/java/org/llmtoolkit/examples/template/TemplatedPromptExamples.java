@@ -1,16 +1,17 @@
 package org.llmtoolkit.examples.template;
 
-import dev.langchain4j.model.googleai.GoogleAiGeminiChatModel;
+import dev.langchain4j.model.chat.ChatLanguageModel;
 import gg.jte.CodeResolver;
 import gg.jte.resolve.DirectoryCodeResolver;
 import java.nio.file.Path;
 import java.util.List;
+import org.llmtoolkit.core.BasicLLM;
 import org.llmtoolkit.core.CommonLLMs;
+import org.llmtoolkit.core.CommonProviders;
 import org.llmtoolkit.core.TemplatedLLMServiceFactory;
 import org.llmtoolkit.core.annotations.PP;
 import org.llmtoolkit.core.annotations.PT;
 import org.llmtoolkit.examples.ProgrammingLanguages;
-import org.llmtoolkit.util.Env;
 import org.llmtoolkit.util.json.SerArray;
 import org.llmtoolkit.util.json.SerObject;
 
@@ -25,11 +26,11 @@ import org.llmtoolkit.util.json.SerObject;
 public class TemplatedPromptExamples {
 
     private static final CodeResolver TEMPLATES_ROOT = new DirectoryCodeResolver(Path.of("src/test/java"));
-    public static final GoogleAiGeminiChatModel MODEL = GoogleAiGeminiChatModel.builder()
-            .apiKey(Env.getRequired("GEMINI_API_KEY"))
-            .modelName(CommonLLMs.GEMINI_2_0_FLASH.get().getModel())
-            .temperature(0.5)
-            .build();
+    public static final ChatLanguageModel MODEL = BasicLLM.builder()
+            .model(CommonLLMs.GEMINI_2_0_FLASH)
+            .provider(CommonProviders.GOOGLE.get())
+            .build()
+            .get();
 
     // Used to demo how complex Java objects can be used in JTE templates
     public record ChooseFrom(String adjective, List<String> options) {

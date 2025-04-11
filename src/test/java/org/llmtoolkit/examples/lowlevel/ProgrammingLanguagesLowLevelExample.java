@@ -1,6 +1,8 @@
 package org.llmtoolkit.examples.lowlevel;
 
+import org.llmtoolkit.core.BasicLLM;
 import org.llmtoolkit.core.CommonLLMs;
+import org.llmtoolkit.core.CommonProviders;
 import org.llmtoolkit.core.OutputInstructions;
 import org.llmtoolkit.examples.ProgrammingLanguages;
 import org.llmtoolkit.util.json.SerObject;
@@ -15,8 +17,12 @@ public class ProgrammingLanguagesLowLevelExample {
         String outputInstructions = OutputInstructions.singleObjectInstructions(ProgrammingLanguages.class);
         System.out.println("OUTPUT INSTRUCTIONS:\n" + outputInstructions);
 
-        String jsonAnswer = CommonLLMs.GPT_4o.get()
-                .answer(
+        String jsonAnswer = BasicLLM.builder()
+                .model(CommonLLMs.GPT_4O)
+                .provider(CommonProviders.OPENAI.get())
+                .build()
+                .get()
+                .chat(
                         "Name 3 best programming languages, and explain why they are the best. Consider all alternatives. "
                                 + "Provide 2 valid and 2 lame reasons for each. \n"
                                 + outputInstructions);
