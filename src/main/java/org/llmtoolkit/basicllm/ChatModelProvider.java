@@ -1,7 +1,6 @@
-package org.llmtoolkit.providers.chatmodel;
+package org.llmtoolkit.basicllm;
 
 import dev.langchain4j.model.chat.ChatLanguageModel;
-import org.llmtoolkit.core.BasicLLM;
 
 public interface ChatModelProvider {
     ChatLanguageModel createChatModel(BasicLLM llm);

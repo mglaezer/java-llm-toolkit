@@ -1,27 +1,24 @@
-package org.llmtoolkit.core;
+package org.llmtoolkit.basicllm;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
+import dev.langchain4j.model.chat.ChatLanguageModel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NonNull;
-import org.llmtoolkit.providers.LLMProvider;
 
 /**
- * A simplified abstraction for making LLM calls with commonly used parameters.
- *
- * This class provides a unified interface for different LLM providers, delegating to either:
- * - langchain4j for most providers
- * - AltOpenAiLLMProvider for OpenAI-compatible APIs (see that class for specific use cases)
- *
- * Users can implement custom providers using either langchain4j integration
- * or direct HTTP calls via LLMProvider interface.
+ * A simplified factory for creating ChatLanguageModel instances with commonly used parameters.
  */
 @Getter
 @Builder(toBuilder = true)
-public class BasicLLM implements StringAnswer {
+public class BasicLLM implements Supplier<ChatLanguageModel> {
+    @NonNull
     private final String model;
-    private final LLMProvider provider;
+
+    @NonNull
+    private final ChatModelProvider provider;
+
     private final Double temperature;
     private final Double topP;
     private final boolean thinking;
@@ -30,20 +27,22 @@ public class BasicLLM implements StringAnswer {
     private final Integer thinkingTokens;
     private final Integer timeout;
 
-    public static Supplier<@NonNull BasicLLM> of(String model, LLMProvider provider) {
+    public static Supplier<ChatLanguageModel> of(String model, ChatModelProvider provider) {
         return Suppliers.memoize(() -> BasicLLM.builder()
                 .model(model)
                 .provider(provider)
                 .thinking(false)
-                .build());
+                .build()
+                .get());
     }
 
-    public static Supplier<@NonNull BasicLLM> of(String model, LLMProvider provider, boolean thinking) {
+    public static Supplier<ChatLanguageModel> of(String model, ChatModelProvider provider, boolean thinking) {
         return Suppliers.memoize(() -> BasicLLM.builder()
                 .model(model)
                 .provider(provider)
                 .thinking(thinking)
-                .build());
+                .build()
+                .get());
     }
 
     @Getter
@@ -60,7 +59,8 @@ public class BasicLLM implements StringAnswer {
     }
 
     @Override
-    public String answer(String input) {
-        return provider.answer(input, this);
+    @NonNull
+    public ChatLanguageModel get() {
+        return provider.createChatModel(this);
     }
 }

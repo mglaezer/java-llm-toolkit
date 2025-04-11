@@ -62,10 +62,15 @@ dependencies {
     testImplementation "org.junit.jupiter:junit-jupiter-params:${junitVersion}"
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${junitVersion}"
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.12.1'
+
+    implementation 'ch.qos.logback:logback-classic:1.4.14'
 }
 
 test {
     useJUnitPlatform()
+    testLogging {
+        showStandardStreams = true
+    }
 }
 
 tasks.named('test') {

@@ -1,4 +1,4 @@
-package org.llmtoolkit.providers;
+package org.llmtoolkit.basicllm;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -13,10 +13,11 @@ import org.springframework.web.client.RestClient;
 
 /**
  * Alternative to Langchain4j client that properly handles timeouts for OpenAI-compatible providers.
- * While Langchain4j's {@link org.llmtoolkit.providers.chatmodel.OpenAiChatModelProvider} supports timeouts,
+ * While Langchain4j's {@link OpenAiChatModelProvider} supports timeouts,
  * it only works with OpenAI itself. Other providers using the OpenAI-compatible API (Inference.net, DeepSeek, etc.)
  * need this alternative implementation if the requests exceed 60 sec.
  */
+@SuppressWarnings("unused")
 public class AltClient {
 
     private static final ObjectMapper objectMapper = new ObjectMapper();

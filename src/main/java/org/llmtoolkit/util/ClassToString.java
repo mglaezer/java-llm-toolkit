@@ -33,7 +33,9 @@ public class ClassToString {
                     generateClassDefinition(current, sb, printMethods, qualifyNestedClassNames);
                 } else if (current.isInterface()) {
                     generateInterfaceDefinition(current, sb, printMethods, qualifyNestedClassNames);
-                } else if (!current.isEnum()) {
+                } else if (current.isEnum()) {
+                    generateEnumDefinition(current, sb, printMethods, qualifyNestedClassNames);
+                } else {
                     generateRegularClassDefinition(current, sb, printMethods, qualifyNestedClassNames);
                 }
                 sb.append("\n");
@@ -71,25 +73,64 @@ public class ClassToString {
     }
 
     private static void addTypeAndGenerics(Type type, Queue<Class<?>> toProcess) {
+        // Use a set to track types we've already seen to prevent infinite recursion
+        addTypeAndGenerics(type, toProcess, new HashSet<>());
+    }
+
+    private static void addTypeAndGenerics(Type type, Queue<Class<?>> toProcess, Set<Type> visited) {
+        // Prevent infinite recursion by tracking visited types
+        if (visited.contains(type)) {
+            return;
+        }
+        visited.add(type);
+
         if (type instanceof Class<?> clazz) {
-            // Skip void type, primitive types, and array classes
-            if (clazz == void.class || clazz.isPrimitive() || clazz.isArray()) {
+            // Skip void type, primitive types
+            if (clazz == void.class || clazz.isPrimitive()) {
                 return;
             }
-            if ((clazz.isRecord() || clazz.isInterface() || !clazz.isEnum())
-                    && !clazz.getName().startsWith(JAVA_PACKAGE_PREFIX)) {
+            if (clazz.isArray()) {
+                addTypeAndGenerics(clazz.getComponentType(), toProcess, visited);
+                return;
+            }
+            if (!clazz.getName().startsWith(JAVA_PACKAGE_PREFIX)) {
                 toProcess.add(clazz);
+
+                // Add nested classes
+                for (Class<?> nestedClass : clazz.getDeclaredClasses()) {
+                    if (!nestedClass.isSynthetic()) {
+                        toProcess.add(nestedClass);
+                    }
+                }
             }
         } else if (type instanceof ParameterizedType paramType) {
             Type rawType = paramType.getRawType();
             if (rawType instanceof Class<?> rawClass && !rawClass.getName().startsWith(JAVA_PACKAGE_PREFIX)) {
-                if (rawClass.isRecord() || rawClass.isInterface() || !rawClass.isEnum()) {
-                    toProcess.add(rawClass);
-                }
+                toProcess.add(rawClass);
             }
 
             for (Type typeArg : paramType.getActualTypeArguments()) {
-                addTypeAndGenerics(typeArg, toProcess);
+                addTypeAndGenerics(typeArg, toProcess, visited);
+            }
+        } else if (type instanceof WildcardType wildcardType) {
+            // Process upper and lower bounds of wildcard types
+            for (Type upperBound : wildcardType.getUpperBounds()) {
+                if (!upperBound.equals(Object.class)) { // Skip Object.class to prevent recursion
+                    addTypeAndGenerics(upperBound, toProcess, visited);
+                }
+            }
+            for (Type lowerBound : wildcardType.getLowerBounds()) {
+                addTypeAndGenerics(lowerBound, toProcess, visited);
+            }
+        } else if (type instanceof GenericArrayType genericArrayType) {
+            // Process component type of generic arrays
+            addTypeAndGenerics(genericArrayType.getGenericComponentType(), toProcess, visited);
+        } else if (type instanceof TypeVariable<?> typeVariable) {
+            // Process bounds of type variables
+            for (Type bound : typeVariable.getBounds()) {
+                if (!bound.equals(Object.class)) { // Skip Object.class to prevent recursion
+                    addTypeAndGenerics(bound, toProcess, visited);
+                }
             }
         }
     }
@@ -98,7 +139,7 @@ public class ClassToString {
             Class<?> clazz, StringBuilder sb, boolean printMethods, boolean qualifyNestedClassNames) {
         // Add ALL annotations, including inherited ones
         appendAnnotations(clazz.getAnnotations(), sb);
-        appendModifiers(clazz.getModifiers(), sb, false);
+        appendModifiers(clazz.getModifiers(), sb, false, clazz);
         sb.append("record ").append(getTypeName(clazz, qualifyNestedClassNames));
         appendTypeParameters(clazz.getTypeParameters(), sb);
 
@@ -116,7 +157,7 @@ public class ClassToString {
         }
         sb.append(")");
 
-        appendInterfaces(clazz.getInterfaces(), sb, "implements");
+        appendInterfaces(clazz.getInterfaces(), sb);
         sb.append(" {\n");
 
         if (printMethods) {
@@ -224,7 +265,6 @@ public class ClassToString {
             // Sort methods to ensure consistent ordering
             methods = methods.clone();
             Arrays.sort(methods, (a, b) -> {
-                // Put "value" first, then sort alphabetically
                 if (a.getName().equals(VALUE_METHOD)) return -1;
                 if (b.getName().equals(VALUE_METHOD)) return 1;
                 return a.getName().compareTo(b.getName());
@@ -235,6 +275,14 @@ public class ClassToString {
                 method.setAccessible(true);
                 Object value = method.invoke(annotation);
                 Object defaultValue = method.getDefaultValue();
+
+                // NOTE: Skipping empty arrays is not strictly correct as they might not be default values.
+                // We do this for cleaner output, trading complete accuracy for better readability.
+                // In practice, empty arrays in annotations are rarely meaningful when different from null.
+                if (value != null && value.getClass().isArray() && Array.getLength(value) == 0) {
+                    continue;
+                }
+
                 if (value != null && (!value.equals(defaultValue))) {
                     nonDefaultValues.put(method.getName(), value);
                 }
@@ -243,10 +291,8 @@ public class ClassToString {
             if (!nonDefaultValues.isEmpty()) {
                 sb.append("(");
                 if (nonDefaultValues.size() == 1 && nonDefaultValues.containsKey(VALUE_METHOD)) {
-                    // If "value" is the only parameter, just print its value without the name
                     sb.append(formatAnnotationValue(nonDefaultValues.get(VALUE_METHOD)));
                 } else {
-                    // Print all parameters with their names
                     boolean first = true;
                     for (Map.Entry<String, Object> entry : nonDefaultValues.entrySet()) {
                         if (!first) {
@@ -266,16 +312,73 @@ public class ClassToString {
     }
 
     private static String formatAnnotationValue(Object value) {
-        if (value instanceof String) {
+        if (value == null) {
+            return "null";
+        } else if (value instanceof String) {
             return "\"" + value + "\"";
         } else if (value instanceof Class<?>) {
             return ((Class<?>) value).getSimpleName() + ".class";
         } else if (value instanceof Enum<?>) {
             return value.toString();
         } else if (value.getClass().isArray()) {
-            return Arrays.deepToString((Object[]) value);
+            if (value.getClass().getComponentType().isPrimitive()) {
+                // Handle primitive arrays
+                if (value instanceof boolean[]) {
+                    return formatPrimitiveArray(value);
+                } else if (value instanceof byte[]) {
+                    return formatPrimitiveArray(value);
+                } else if (value instanceof char[]) {
+                    return formatPrimitiveArray(value);
+                } else if (value instanceof double[]) {
+                    return formatPrimitiveArray(value);
+                } else if (value instanceof float[]) {
+                    return formatPrimitiveArray(value);
+                } else if (value instanceof int[]) {
+                    return formatPrimitiveArray(value);
+                } else if (value instanceof long[]) {
+                    return formatPrimitiveArray(value);
+                } else if (value instanceof short[]) {
+                    return formatPrimitiveArray(value);
+                }
+                return "{}";
+            }
+
+            // Handle object arrays with proper formatting
+            Object[] array = (Object[]) value;
+            if (array.length == 0) {
+                return "{}";
+            }
+
+            StringBuilder sb = new StringBuilder("{");
+            for (int i = 0; i < array.length; i++) {
+                Object element = array[i];
+                sb.append(formatAnnotationValue(element));
+                if (i < array.length - 1) {
+                    sb.append(", ");
+                }
+            }
+            sb.append("}");
+            return sb.toString();
         }
         return value.toString();
+    }
+
+    private static String formatPrimitiveArray(Object array) {
+        int length = Array.getLength(array);
+        if (length == 0) {
+            return "{}";
+        }
+
+        StringBuilder sb = new StringBuilder("{");
+        for (int i = 0; i < length; i++) {
+            Object element = Array.get(array, i);
+            sb.append(element);
+            if (i < length - 1) {
+                sb.append(", ");
+            }
+        }
+        sb.append("}");
+        return sb.toString();
     }
 
     private static String getTypeName(Type type, boolean qualifyNestedClassNames) {
@@ -297,6 +400,22 @@ public class ClassToString {
                             .map(t -> getTypeName(t, qualifyNestedClassNames))
                             .collect(Collectors.joining(", "))
                     + ">";
+        } else if (type instanceof WildcardType wildcardType) {
+            StringBuilder sb = new StringBuilder("?");
+            Type[] upperBounds = wildcardType.getUpperBounds();
+            Type[] lowerBounds = wildcardType.getLowerBounds();
+
+            if (lowerBounds.length > 0) {
+                sb.append(" super ").append(getTypeName(lowerBounds[0], qualifyNestedClassNames));
+            } else if (upperBounds.length > 0 && !upperBounds[0].equals(Object.class)) {
+                sb.append(" extends ").append(getTypeName(upperBounds[0], qualifyNestedClassNames));
+            }
+
+            return sb.toString();
+        } else if (type instanceof GenericArrayType genericArrayType) {
+            return getTypeName(genericArrayType.getGenericComponentType(), qualifyNestedClassNames) + "[]";
+        } else if (type instanceof TypeVariable<?> typeVariable) {
+            return typeVariable.getName();
         }
         return type.getTypeName();
     }
@@ -323,11 +442,27 @@ public class ClassToString {
 
     private static void generateInterfaceDefinition(
             Class<?> interfaceClass, StringBuilder sb, boolean printMethods, boolean qualifyNestedClassNames) {
+        // Skip if this is an annotation interface or extends one
+        if (isAnnotationInterface(interfaceClass)) {
+            return;
+        }
+
         appendAnnotations(interfaceClass.getAnnotations(), sb);
-        appendModifiers(interfaceClass.getModifiers(), sb, true);
+        appendModifiers(interfaceClass.getModifiers(), sb, true, interfaceClass);
         sb.append(interfaceClass.getSimpleName());
         appendTypeParameters(interfaceClass.getTypeParameters(), sb);
-        appendInterfaces(interfaceClass.getInterfaces(), sb, "extends");
+
+        // Handle generic interfaces
+        Type[] genericInterfaces = interfaceClass.getGenericInterfaces();
+        if (genericInterfaces.length > 0) {
+            sb.append(" extends ");
+            for (int i = 0; i < genericInterfaces.length; i++) {
+                if (i > 0) {
+                    sb.append(", ");
+                }
+                sb.append(getTypeName(genericInterfaces[i], qualifyNestedClassNames));
+            }
+        }
         sb.append(" {\n");
 
         if (printMethods) {
@@ -346,19 +481,101 @@ public class ClassToString {
         sb.append(BASE_INDENT).append("}\n");
     }
 
+    private static boolean isAnnotationInterface(Class<?> clazz) {
+        if (!clazz.isInterface()) {
+            return false;
+        }
+
+        // Check if it's an annotation interface directly
+        if (clazz.equals(Annotation.class) || clazz.isAnnotation()) {
+            return true;
+        }
+
+        // Check if it extends an annotation interface
+        for (Class<?> iface : clazz.getInterfaces()) {
+            if (isAnnotationInterface(iface)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static void generateEnumDefinition(
+            Class<?> enumClass, StringBuilder sb, boolean printMethods, boolean qualifyNestedClassNames) {
+        appendAnnotations(enumClass.getAnnotations(), sb);
+        appendModifiers(enumClass.getModifiers() & ~Modifier.FINAL, sb, false, enumClass);
+        sb.append("enum ").append(getTypeName(enumClass, qualifyNestedClassNames));
+        appendInterfaces(enumClass.getInterfaces(), sb);
+        sb.append(" {\n");
+
+        // Add enum constants
+        Object[] constants = enumClass.getEnumConstants();
+        if (constants != null && constants.length > 0) {
+            for (int i = 0; i < constants.length; i++) {
+                sb.append(SINGLE_INDENT).append(constants[i].toString());
+                if (i < constants.length - 1) {
+                    sb.append(",\n");
+                } else {
+                    sb.append(";\n");
+                }
+            }
+            sb.append("\n");
+        }
+
+        // Add fields
+        for (Field field : enumClass.getDeclaredFields()) {
+            if (!field.isSynthetic() && !field.isEnumConstant()) {
+                appendField(field, sb);
+            }
+        }
+
+        // Add methods
+        if (printMethods) {
+            // Add constructors
+            for (Constructor<?> constructor : enumClass.getDeclaredConstructors()) {
+                if (!constructor.isSynthetic()) {
+                    appendConstructor(constructor, sb, qualifyNestedClassNames);
+                }
+            }
+
+            // Add methods
+            for (Method method : enumClass.getDeclaredMethods()) {
+                if (!method.isSynthetic()
+                        && !method.getName().equals("values")
+                        && !method.getName().equals("valueOf")) {
+                    appendMethod(method, sb, qualifyNestedClassNames, false);
+                }
+            }
+        }
+
+        sb.append(BASE_INDENT).append("}\n");
+    }
+
     private static void generateRegularClassDefinition(
             Class<?> clazz, StringBuilder sb, boolean printMethods, boolean qualifyNestedClassNames) {
         appendAnnotations(clazz.getAnnotations(), sb);
-        appendModifiers(clazz.getModifiers(), sb, false);
+        appendModifiers(clazz.getModifiers(), sb, false, clazz);
         sb.append("class ").append(getTypeName(clazz, qualifyNestedClassNames));
         appendTypeParameters(clazz.getTypeParameters(), sb);
 
-        Class<?> superclass = clazz.getSuperclass();
-        if (superclass != null && superclass != Object.class) {
-            sb.append(" extends ").append(getTypeName(superclass, qualifyNestedClassNames));
+        // Handle generic superclass
+        Type genericSuperclass = clazz.getGenericSuperclass();
+        if (genericSuperclass != null && !genericSuperclass.equals(Object.class)) {
+            sb.append(" extends ").append(getTypeName(genericSuperclass, qualifyNestedClassNames));
         }
 
-        appendInterfaces(clazz.getInterfaces(), sb, "implements");
+        // Handle generic interfaces
+        Type[] genericInterfaces = clazz.getGenericInterfaces();
+        if (genericInterfaces.length > 0) {
+            sb.append(" implements ");
+            for (int i = 0; i < genericInterfaces.length; i++) {
+                if (i > 0) {
+                    sb.append(", ");
+                }
+                sb.append(getTypeName(genericInterfaces[i], qualifyNestedClassNames));
+            }
+        }
         sb.append(" {\n");
 
         if (printMethods) {
@@ -424,12 +641,17 @@ public class ClassToString {
         }
     }
 
-    private static void appendModifiers(int modifiers, StringBuilder sb, boolean isInterface) {
-        String modifierStr = Modifier.toString(modifiers);
-        // Remove redundant 'abstract' modifier for interfaces
+    private static void appendModifiers(int modifiers, StringBuilder sb, boolean isInterface, Class<?> clazz) {
         if (isInterface) {
-            modifierStr = modifierStr.replace("abstract interface", "interface");
+            // For interfaces, only remove abstract, keep public
+            modifiers &= ~Modifier.ABSTRACT;
+        } else if (clazz != null && clazz.isRecord()) {
+            // For records, only remove final, keep public and other modifiers like static
+            modifiers &= ~Modifier.FINAL;
         }
+
+        // Get the modifier string after removing implicit ones
+        String modifierStr = Modifier.toString(modifiers);
 
         if (!modifierStr.isEmpty()) {
             sb.append(ClassToString.BASE_INDENT).append(modifierStr).append(" ");
@@ -439,34 +661,76 @@ public class ClassToString {
     private static void appendTypeParameters(TypeVariable<?>[] typeParameters, StringBuilder sb) {
         if (typeParameters.length > 0) {
             sb.append("<");
-            sb.append(Arrays.stream(typeParameters).map(Type::getTypeName).collect(Collectors.joining(", ")));
+            for (int i = 0; i < typeParameters.length; i++) {
+                TypeVariable<?> typeVar = typeParameters[i];
+                sb.append(typeVar.getName());
+
+                // Add bounds if present and not just Object
+                Type[] bounds = typeVar.getBounds();
+                if (bounds.length > 0 && !bounds[0].equals(Object.class)) {
+                    sb.append(" extends ");
+                    for (int j = 0; j < bounds.length; j++) {
+                        sb.append(getTypeName(bounds[j], true));
+                        if (j < bounds.length - 1) {
+                            sb.append(" & ");
+                        }
+                    }
+                }
+
+                if (i < typeParameters.length - 1) {
+                    sb.append(", ");
+                }
+            }
             sb.append(">");
         }
     }
 
-    private static void appendInterfaces(Class<?>[] interfaces, StringBuilder sb, String keyword) {
+    private static void appendInterfaces(Class<?>[] interfaces, StringBuilder sb) {
         if (interfaces.length > 0) {
-            sb.append(" ").append(keyword).append(" ");
+            sb.append(" ").append("implements").append(" ");
             sb.append(Arrays.stream(interfaces).map(Class::getSimpleName).collect(Collectors.joining(", ")));
         }
+    }
+
+    private static void appendField(Field field, StringBuilder sb) {
+        // Skip synthetic fields
+        if (field.isSynthetic()) {
+            return;
+        }
+
+        // Add annotations
+        appendAnnotations(field.getAnnotations(), sb);
+
+        // Add modifiers
+        sb.append(SINGLE_INDENT);
+        appendModifiers(field.getModifiers(), sb, false, null);
+
+        // Add type and name
+        sb.append(getTypeName(field.getGenericType(), false))
+                .append(" ")
+                .append(field.getName())
+                .append(";\n");
     }
 
     private static void appendMethod(
             Method method, StringBuilder sb, boolean qualifyNestedClassNames, boolean isInterface) {
         String methodIndent = SINGLE_INDENT;
+        int modifiers = method.getModifiers();
 
-        // Get all annotations including inherited ones
+        // For interface methods, remove the public modifier as it's implicit
+        if (isInterface) {
+            modifiers &= ~Modifier.PUBLIC;
+        }
+
+        // Collect all annotations
         Set<Annotation> allAnnotations = new LinkedHashSet<>();
         Collections.addAll(allAnnotations, method.getAnnotations());
 
-        // Check for @Override
-        Class<?> declaringClass = method.getDeclaringClass();
+        // Check for @Override by searching superclasses and interfaces
+        boolean isOverride = false;
         String methodName = method.getName();
         Class<?>[] paramTypes = method.getParameterTypes();
-
-        // Check superclass for override
-        Class<?> superclass = declaringClass.getSuperclass();
-        boolean isOverride = false;
+        Class<?> superclass = method.getDeclaringClass().getSuperclass();
         while (superclass != null && !isOverride) {
             try {
                 superclass.getDeclaredMethod(methodName, paramTypes);
@@ -475,10 +739,8 @@ public class ClassToString {
                 superclass = superclass.getSuperclass();
             }
         }
-
-        // Check interfaces for override
         if (!isOverride) {
-            for (Class<?> iface : declaringClass.getInterfaces()) {
+            for (Class<?> iface : method.getDeclaringClass().getInterfaces()) {
                 try {
                     iface.getDeclaredMethod(methodName, paramTypes);
                     isOverride = true;
@@ -487,37 +749,65 @@ public class ClassToString {
                 }
             }
         }
-
-        // Add @Override if method is actually overriding
         if (isOverride) {
             sb.append(methodIndent).append("@Override\n");
         }
-
-        // Add other annotations
         for (Annotation annotation : allAnnotations) {
             sb.append(methodIndent).append(formatAnnotation(annotation)).append("\n");
         }
-
         sb.append(methodIndent);
 
-        int methodModifiers = method.getModifiers();
+        // Remove TRANSIENT as it's not valid for methods
+        modifiers &= ~Modifier.TRANSIENT;
 
-        // Remove TRANSIENT as it's not valid for methods, but appears in some cases
-        methodModifiers &= ~Modifier.TRANSIENT;
+        // Detect default method using reflection
+        boolean isDefaultMethod = isInterface && method.isDefault();
 
+        // For interface methods, remove the abstract modifier as it is implicit
         if (isInterface) {
-            methodModifiers &= ~Modifier.ABSTRACT;
+            modifiers &= ~Modifier.ABSTRACT;
         }
 
-        String modifierStr = Modifier.toString(methodModifiers);
+        String modifierStr = Modifier.toString(modifiers);
         if (!modifierStr.isEmpty()) {
             sb.append(modifierStr).append(" ");
         }
 
-        sb.append(getTypeName(method.getGenericReturnType(), qualifyNestedClassNames))
-                .append(" ")
-                .append(method.getName());
+        // Add the 'default' keyword if this is a default interface method
+        if (isDefaultMethod) {
+            sb.append("default ");
+        }
 
+        // Handle generic type parameters for the method
+        TypeVariable<?>[] typeParameters = method.getTypeParameters();
+        if (typeParameters.length > 0) {
+            sb.append("<");
+            for (int i = 0; i < typeParameters.length; i++) {
+                TypeVariable<?> typeVar = typeParameters[i];
+                sb.append(typeVar.getName());
+                Type[] bounds = typeVar.getBounds();
+                if (bounds.length > 0 && !bounds[0].equals(Object.class)) {
+                    sb.append(" extends ");
+                    for (int j = 0; j < bounds.length; j++) {
+                        sb.append(getTypeName(bounds[j], qualifyNestedClassNames));
+                        if (j < bounds.length - 1) {
+                            sb.append(" & ");
+                        }
+                    }
+                }
+                if (i < typeParameters.length - 1) {
+                    sb.append(", ");
+                }
+            }
+            sb.append("> ");
+        }
+
+        // Append return type and method name
+        sb.append(getTypeName(method.getGenericReturnType(), qualifyNestedClassNames))
+                .append(" ");
+        sb.append(method.getName());
+
+        // Append parameters with varargs check
         sb.append("(");
         Parameter[] parameters = method.getParameters();
         for (int i = 0; i < parameters.length; i++) {
@@ -525,16 +815,37 @@ public class ClassToString {
             for (Annotation annotation : param.getAnnotations()) {
                 sb.append(formatAnnotation(annotation)).append(" ");
             }
-            sb.append(getTypeName(param.getParameterizedType(), qualifyNestedClassNames))
-                    .append(" ")
-                    .append(param.getName());
+            int paramModifiers = param.getModifiers();
+            if (paramModifiers != 0) {
+                sb.append(Modifier.toString(paramModifiers)).append(" ");
+            }
+            String typeName = getTypeName(param.getParameterizedType(), qualifyNestedClassNames);
+            if (param.isVarArgs()) {
+                if (typeName.endsWith("[]")) {
+                    typeName = typeName.substring(0, typeName.length() - 2) + "...";
+                }
+            }
+            sb.append(typeName).append(" ").append(param.getName());
             if (i < parameters.length - 1) {
                 sb.append(", ");
             }
         }
         sb.append(")");
 
-        if (isInterface) {
+        // Append throws clause if any
+        Class<?>[] exceptionTypes = method.getExceptionTypes();
+        if (exceptionTypes.length > 0) {
+            sb.append(" throws ");
+            for (int i = 0; i < exceptionTypes.length; i++) {
+                sb.append(getTypeName(exceptionTypes[i], qualifyNestedClassNames));
+                if (i < exceptionTypes.length - 1) {
+                    sb.append(", ");
+                }
+            }
+        }
+
+        // For interface abstract methods, add a semicolon; else, add an empty body
+        if (isInterface && !isDefaultMethod && !Modifier.isStatic(method.getModifiers())) {
             sb.append(";\n");
         } else {
             sb.append(" {}\n");
