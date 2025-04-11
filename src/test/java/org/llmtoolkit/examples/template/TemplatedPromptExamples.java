@@ -85,6 +85,9 @@ public class TemplatedPromptExamples {
     private static void demoLangchainAiServices_returningObject() {
         ProgrammingLanguagesService service = TemplatedLLMServiceFactory.builder()
                 .model(MODEL)
+                .aiServiceCustomizer(aiServices -> {
+                    /* Put rag, memory, tools, etc. here */
+                })
                 .codeResolver(TEMPLATES_ROOT)
                 .build()
                 .create(ProgrammingLanguagesService.class);

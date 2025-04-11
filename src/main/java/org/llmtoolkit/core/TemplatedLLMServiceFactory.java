@@ -24,7 +24,7 @@ public class TemplatedLLMServiceFactory {
     @NonNull
     private final ChatLanguageModel model;
 
-    private Consumer<AiServices<StringAnswer>> builderCustomizer;
+    private Consumer<AiServices<StringAnswer>> aiServiceCustomizer;
     private CodeResolver codeResolver;
     private boolean isToPrintPrompt;
     private boolean isToPrintAnswer;
@@ -39,8 +39,8 @@ public class TemplatedLLMServiceFactory {
         if (stringAnswer == null) {
             AiServices<StringAnswer> baseBuilder =
                     AiServices.builder(StringAnswer.class).chatLanguageModel(model);
-            if (builderCustomizer != null) {
-                builderCustomizer.accept(baseBuilder);
+            if (aiServiceCustomizer != null) {
+                aiServiceCustomizer.accept(baseBuilder);
             }
             stringAnswer = baseBuilder.build();
         }
