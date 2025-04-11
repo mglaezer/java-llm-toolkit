@@ -1,5 +1,6 @@
 package org.llmtoolkit.core;
 
+import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.service.AiServices;
 import gg.jte.CodeResolver;
 import gg.jte.ContentType;
@@ -10,6 +11,7 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import lombok.Builder;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.llmtoolkit.core.annotations.PP;
 import org.llmtoolkit.core.annotations.PT;
@@ -19,6 +21,8 @@ import org.llmtoolkit.util.json.JsonUtils;
 @Slf4j
 @Builder
 public class TemplatedLLMServiceFactory {
+    @NonNull
+    private final ChatLanguageModel model;
 
     private Consumer<AiServices<StringAnswer>> builderCustomizer;
     private CodeResolver codeResolver;
@@ -28,13 +32,16 @@ public class TemplatedLLMServiceFactory {
     private StringAnswer stringAnswer;
     private TemplateEngine templateEngine;
 
-    private synchronized void initializeIfNeeded() {
+    private void initializeIfNeeded() {
         if (templateEngine == null) {
             templateEngine = TemplateEngine.create(codeResolver, ContentType.Plain);
         }
         if (stringAnswer == null) {
-            AiServices<StringAnswer> baseBuilder = AiServices.builder(StringAnswer.class);
-            builderCustomizer.accept(baseBuilder);
+            AiServices<StringAnswer> baseBuilder =
+                    AiServices.builder(StringAnswer.class).chatLanguageModel(model);
+            if (builderCustomizer != null) {
+                builderCustomizer.accept(baseBuilder);
+            }
             stringAnswer = baseBuilder.build();
         }
     }
