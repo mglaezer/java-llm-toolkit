@@ -9,8 +9,8 @@ import org.llmtoolkit.util.json.SerObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ProgrammingLanguagesLowLevelExample {
-    private static final Logger LOG = LoggerFactory.getLogger(ProgrammingLanguagesLowLevelExample.class);
+public class LowLevelExample {
+    private static final Logger LOG = LoggerFactory.getLogger(LowLevelExample.class);
 
     /*
      * This example demonstrates how to use the low-level API to get structured output from LLM.

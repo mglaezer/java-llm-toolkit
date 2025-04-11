@@ -8,7 +8,7 @@ import java.nio.file.Path;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.llmtoolkit.basicllm.CommonLLMs;
-import org.llmtoolkit.core.JteTemplatingEngine;
+import org.llmtoolkit.core.JteTemplateProcessor;
 import org.llmtoolkit.core.TemplatedLLMServiceFactory;
 import org.llmtoolkit.core.annotations.PP;
 import org.llmtoolkit.core.annotations.PT;
@@ -45,14 +45,15 @@ public class TemplatedPromptExamples {
     }
 
     interface ProgrammingLanguagesService {
+
         @PT(templatePath = "programming_languages_prompt.jte")
-        List<ProgrammingLanguages.Language> getBestLanguagesAsList(
+        ProgrammingLanguages getBestLanguagesAsObject(
                 @PP("count") int count,
                 @PP("examplesCount") int examplesCount1,
                 @PP("chooseFrom") ChooseFrom chooseFrom);
 
         @PT(templatePath = "programming_languages_prompt.jte")
-        ProgrammingLanguages getBestLanguagesAsObject(
+        List<ProgrammingLanguages.Language> getBestLanguagesAsList(
                 @PP("count") int count,
                 @PP("examplesCount") int examplesCount1,
                 @PP("chooseFrom") ChooseFrom chooseFrom);
@@ -91,7 +92,7 @@ public class TemplatedPromptExamples {
     private static void demoLangchainAiServices_returningObject() {
         ProgrammingLanguagesService service = TemplatedLLMServiceFactory.builder()
                 .model(MODEL)
-                .templatingEngine(JteTemplatingEngine.create(TEMPLATES_ROOT))
+                .templateProcessor(JteTemplateProcessor.create(TEMPLATES_ROOT))
                 .isToPrintPrompt(true)
                 .aiServiceCustomizer(aiServices -> {
                     /* Put rag, memory, tools, etc. here */
@@ -106,7 +107,7 @@ public class TemplatedPromptExamples {
     private static void demoLangchainAiServices_returningList() {
         ProgrammingLanguagesService service = TemplatedLLMServiceFactory.builder()
                 .model(MODEL)
-                .templatingEngine(JteTemplatingEngine.create(TEMPLATES_ROOT))
+                .templateProcessor(JteTemplateProcessor.create(TEMPLATES_ROOT))
                 .build()
                 .create(ProgrammingLanguagesService.class);
 
@@ -119,7 +120,7 @@ public class TemplatedPromptExamples {
     private static void demoBasicLLM_returningString() {
         ProgrammingLanguagesService service = TemplatedLLMServiceFactory.builder()
                 .model(MODEL)
-                .templatingEngine(JteTemplatingEngine.create(TEMPLATES_ROOT))
+                .templateProcessor(JteTemplateProcessor.create(TEMPLATES_ROOT))
                 .build()
                 .create(ProgrammingLanguagesService.class);
 
