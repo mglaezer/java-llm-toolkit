@@ -2,13 +2,17 @@ package org.llmtoolkit.core;
 
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.service.AiServices;
+import dev.langchain4j.service.UserMessage;
+import dev.langchain4j.service.V;
 import java.lang.reflect.Method;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.implementation.StubMethod;
 import org.llmtoolkit.core.annotations.PT;
 
 public class NativeTypeStrategy implements LlmServiceStrategy {
@@ -37,10 +41,21 @@ public class NativeTypeStrategy implements LlmServiceStrategy {
 
         for (Method method : originalInterface.getDeclaredMethods()) {
             if (method.isAnnotationPresent(PT.class)) {
-                // Keep original return types but use String parameter
+                // Define annotations similar to StringAnswer to avoid langchain4j's template resolution
+                AnnotationDescription userMessageAnnotation = AnnotationDescription.Builder.ofType(UserMessage.class)
+                        .defineArray("value", "{{raw}}")
+                        .build();
+
+                AnnotationDescription vAnnotation = AnnotationDescription.Builder.ofType(V.class)
+                        .define("value", "raw")
+                        .build();
+
+                // Define method with annotations
                 builder = builder.defineMethod(method.getName(), method.getReturnType(), Visibility.PUBLIC)
                         .withParameter(String.class, "prompt")
-                        .withoutCode();
+                        .intercept(StubMethod.INSTANCE)
+                        .annotateMethod(userMessageAnnotation)
+                        .annotateParameter(0, vAnnotation);
             }
         }
 
