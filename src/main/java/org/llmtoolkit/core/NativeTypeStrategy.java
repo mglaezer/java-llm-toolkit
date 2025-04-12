@@ -3,7 +3,6 @@ package org.llmtoolkit.core;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.service.AiServices;
 import java.lang.reflect.Method;
-import java.lang.reflect.Type;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import net.bytebuddy.ByteBuddy;
@@ -59,12 +58,14 @@ public class NativeTypeStrategy implements LlmServiceStrategy {
     }
 
     @Override
-    public String augmentPrompt(String resolvedTemplate, Method method, Type returnType) {
-        return resolvedTemplate;
+    public String augmentPromptWithOutputInstructions(String prompt, Method method, ReturnTypeInfo typeInfo) {
+        // Native type strategy doesn't modify the prompt as it relies on langchain4j's built-in type handling
+        return prompt;
     }
 
     @Override
-    public Object processResult(Object result, Type originalReturnType) {
+    public Object convertResult(Object result, ReturnTypeInfo typeInfo) {
+        // Native type strategy doesn't need to process the result as langchain4j handles the conversion
         return result;
     }
 }

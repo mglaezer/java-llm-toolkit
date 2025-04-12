@@ -52,35 +52,8 @@ public class TemplatedLLMServiceFactory {
     }
 
     private void validateMethod(Method method) {
-        extractValueType(method.getGenericReturnType());
+        ReturnTypeInfo.validateType(method.getGenericReturnType());
         templateProcessor.validateTemplate(method);
-    }
-
-    static Class<?> extractValueType(Type returnType) {
-        //noinspection DuplicatedCode
-        if (returnType instanceof Class<?> clazz) {
-            validateReturnType(clazz);
-            return clazz;
-        } else if (returnType instanceof ParameterizedType paramType) {
-            Type[] typeArgs = paramType.getActualTypeArguments();
-            if (typeArgs.length == 1 && typeArgs[0] instanceof Class<?> elementType) {
-                validateReturnType(elementType);
-                return elementType;
-            }
-        }
-        throw new UnsupportedOperationException(
-                "Return type must be either a class (e.g., String, CustomClass) or List<Class> (e.g., List<String>). "
-                        + "Unsupported types include: Map<K,V>, List<List<T>>, List<?>, generic type parameters.");
-    }
-
-    private static void validateReturnType(Class<?> type) {
-        if (type.isPrimitive()) {
-            throw new UnsupportedOperationException("Primitive return types are not supported");
-        }
-        if (type != String.class
-                && (type.getName().startsWith("java.lang.") || type.getName().startsWith("java.util."))) {
-            throw new UnsupportedOperationException("Java language and util types (except String) are not supported");
-        }
     }
 
     private class ServiceInvocationHandler implements InvocationHandler {
@@ -97,9 +70,10 @@ public class TemplatedLLMServiceFactory {
             }
 
             String templatePrompt = templateProcessor.preparePrompt(method, args);
+            ReturnTypeInfo typeInfo = ReturnTypeInfo.from(method.getGenericReturnType());
 
             final String processedPrompt =
-                    serviceStrategy.augmentPrompt(templatePrompt, method, method.getGenericReturnType());
+                    serviceStrategy.augmentPromptWithOutputInstructions(templatePrompt, method, typeInfo);
 
             Do printPrompt = Do.once(() -> printPrompt(processedPrompt), isToPrintPrompt);
 
@@ -114,7 +88,7 @@ public class TemplatedLLMServiceFactory {
                     },
                     printPrompt);
 
-            final Object processedResult = serviceStrategy.processResult(rawResult, method.getGenericReturnType());
+            final Object processedResult = serviceStrategy.convertResult(rawResult, typeInfo);
 
             Do printAnswer = Do.once(
                     () -> {
