@@ -32,12 +32,8 @@ public class TemplatedLLMServiceFactory {
         if (stringAnswer == null) {
             AiServices<StringAnswer> baseBuilder =
                     AiServices.builder(StringAnswer.class).chatLanguageModel(model);
-            if (aiServiceCustomizer != null) {
-                aiServiceCustomizer.accept(baseBuilder);
-                stringAnswer = baseBuilder.build();
-            } else {
-                stringAnswer = model::chat;
-            }
+            if (aiServiceCustomizer != null) aiServiceCustomizer.accept(baseBuilder);
+            stringAnswer = baseBuilder.build();
         }
     }
 

@@ -34,7 +34,7 @@ repositories {
 }
 
 ext {
-    langchain4jVersion = '1.0.0-beta2'
+    langchain4jVersion = '1.0.0-beta3'
     lombokVersion = '1.18.38'
     junitVersion = '5.9.2'
 }
