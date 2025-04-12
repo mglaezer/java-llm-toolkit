@@ -3,7 +3,6 @@ package org.llmtoolkit.core;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.service.AiServices;
 import java.lang.reflect.*;
-import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import lombok.Builder;
@@ -11,7 +10,6 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.llmtoolkit.core.annotations.PT;
 import org.llmtoolkit.util.Do;
-import org.llmtoolkit.util.json.JsonUtils;
 
 @Slf4j
 @Builder
@@ -22,32 +20,27 @@ public class TemplatedLLMServiceFactory {
     @NonNull
     private final TemplateProcessor templateProcessor;
 
-    private Consumer<AiServices<StringAnswer>> aiServiceCustomizer;
+    private Consumer<AiServices<?>> aiServiceCustomizer;
     private boolean isToPrintPrompt;
     private boolean isToPrintAnswer;
 
-    private StringAnswer stringAnswer;
-
-    private void initializeIfNeeded() {
-        if (stringAnswer == null) {
-            AiServices<StringAnswer> baseBuilder =
-                    AiServices.builder(StringAnswer.class).chatLanguageModel(model);
-            if (aiServiceCustomizer != null) aiServiceCustomizer.accept(baseBuilder);
-            stringAnswer = baseBuilder.build();
-        }
-    }
+    @Builder.Default
+    private LlmServiceStrategy serviceStrategy = new StringAnswerStrategy();
 
     @SuppressWarnings("unchecked")
     public <T> T create(Class<T> serviceInterface) {
-
         if (!serviceInterface.isInterface()) {
             throw new IllegalArgumentException("Only interfaces are supported, got: " + serviceInterface.getName());
         }
 
-        initializeIfNeeded();
         validateInterface(serviceInterface);
+
+        Object service = serviceStrategy.createService(serviceInterface, model, aiServiceCustomizer);
+
         return (T) Proxy.newProxyInstance(
-                serviceInterface.getClassLoader(), new Class<?>[] {serviceInterface}, new PromptInvocationHandler());
+                serviceInterface.getClassLoader(),
+                new Class<?>[] {serviceInterface},
+                new ServiceInvocationHandler(service));
     }
 
     private <T> void validateInterface(Class<T> serviceInterface) {
@@ -59,51 +52,12 @@ public class TemplatedLLMServiceFactory {
     }
 
     private void validateMethod(Method method) {
-        extractValueType(method.getGenericReturnType()); // Will throw if invalid
+        extractValueType(method.getGenericReturnType());
         templateProcessor.validateTemplate(method);
     }
 
-    private class PromptInvocationHandler implements InvocationHandler {
-
-        @Override
-        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-            if (method.getDeclaringClass() == Object.class) {
-                return method.invoke(this, args);
-            }
-
-            String prompt = templateProcessor.preparePrompt(method, args);
-            return processPrompt(method, prompt);
-        }
-
-        private Object processPrompt(Method method, String prompt) {
-            Type returnType = method.getGenericReturnType();
-            Class<?> valueType = extractValueType(returnType);
-
-            boolean isList = returnType instanceof ParameterizedType
-                    && ((ParameterizedType) returnType).getRawType() == List.class;
-            boolean isString = returnType == String.class;
-
-            String wholePrompt = isString
-                    ? prompt
-                    : prompt + "\n"
-                            + (isList
-                                    ? OutputInstructions.arrayInstructions(valueType)
-                                    : OutputInstructions.singleObjectInstructions(valueType));
-
-            Do printPrompt = Do.once(() -> printPrompt(wholePrompt), isToPrintPrompt);
-            String answer = withPrintOnError(() -> stringAnswer.answer(wholePrompt), printPrompt);
-            Do printAnswer = Do.once(() -> printAnswer(answer), isToPrintAnswer);
-
-            return withPrintOnError(
-                    () -> isList
-                            ? JsonUtils.parseJsonOrYamlArray(answer, valueType)
-                            : isString ? answer : JsonUtils.parseJsonOrYamlObject(answer, valueType),
-                    printPrompt,
-                    printAnswer);
-        }
-    }
-
-    private Class<?> extractValueType(Type returnType) {
+    static Class<?> extractValueType(Type returnType) {
+        //noinspection DuplicatedCode
         if (returnType instanceof Class<?> clazz) {
             validateReturnType(clazz);
             return clazz;
@@ -119,7 +73,7 @@ public class TemplatedLLMServiceFactory {
                         + "Unsupported types include: Map<K,V>, List<List<T>>, List<?>, generic type parameters.");
     }
 
-    private void validateReturnType(Class<?> type) {
+    private static void validateReturnType(Class<?> type) {
         if (type.isPrimitive()) {
             throw new UnsupportedOperationException("Primitive return types are not supported");
         }
@@ -129,19 +83,64 @@ public class TemplatedLLMServiceFactory {
         }
     }
 
-    private <T> T withPrintOnError(Supplier<T> action, Do... printActions) {
-        try {
-            return action.get();
-        } catch (RuntimeException e) {
-            for (Do printAction : printActions) {
-                printAction.once();
+    private class ServiceInvocationHandler implements InvocationHandler {
+        private final Object service;
+
+        public ServiceInvocationHandler(Object service) {
+            this.service = service;
+        }
+
+        @Override
+        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+            if (method.getDeclaringClass() == Object.class) {
+                return method.invoke(this, args);
             }
-            throw e;
+
+            String templatePrompt = templateProcessor.preparePrompt(method, args);
+
+            final String processedPrompt =
+                    serviceStrategy.augmentPrompt(templatePrompt, method, method.getGenericReturnType());
+
+            Do printPrompt = Do.once(() -> printPrompt(processedPrompt), isToPrintPrompt);
+
+            Method serviceMethod = serviceStrategy.resolveServiceMethod(service, method);
+            Object rawResult = withPrintOnError(
+                    () -> {
+                        try {
+                            return serviceMethod.invoke(service, processedPrompt);
+                        } catch (Exception e) {
+                            throw new RuntimeException("Error invoking service", e);
+                        }
+                    },
+                    printPrompt);
+
+            final Object processedResult = serviceStrategy.processResult(rawResult, method.getGenericReturnType());
+
+            Do printAnswer = Do.once(
+                    () -> {
+                        if (processedResult != null) {
+                            printAnswer(processedResult.toString());
+                        }
+                    },
+                    isToPrintAnswer);
+
+            return withPrintOnError(() -> processedResult, printPrompt, printAnswer);
+        }
+
+        private <T> T withPrintOnError(Supplier<T> action, Do... printActions) {
+            try {
+                return action.get();
+            } catch (RuntimeException e) {
+                for (Do printAction : printActions) {
+                    printAction.once();
+                }
+                throw e;
+            }
         }
     }
 
-    private static void printPrompt(String wholePrompt) {
-        log.info("Prompt:\n{}", wholePrompt);
+    private static void printPrompt(String prompt) {
+        log.info("Prompt:\n{}", prompt);
     }
 
     private static void printAnswer(String answer) {

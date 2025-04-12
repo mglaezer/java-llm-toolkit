@@ -8,8 +8,7 @@ import java.nio.file.Path;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.llmtoolkit.basicllm.CommonLLMs;
-import org.llmtoolkit.core.JteTemplateProcessor;
-import org.llmtoolkit.core.TemplatedLLMServiceFactory;
+import org.llmtoolkit.core.*;
 import org.llmtoolkit.core.annotations.PP;
 import org.llmtoolkit.core.annotations.PT;
 import org.llmtoolkit.examples.ProgrammingLanguages;
@@ -44,7 +43,7 @@ public class TemplatedPromptExamples {
                 List.of("Java", "JavaScript", "Python", "Ruby", "Go", "Rust", "C++", "C#", "Scala", "Fortran"));
     }
 
-    interface ProgrammingLanguagesService {
+    interface ProgrammingLanguagesServiceAsObjectAndString {
 
         @PT(templatePath = "programming_languages_prompt.jte")
         ProgrammingLanguages getBestLanguagesAsObject(
@@ -53,15 +52,18 @@ public class TemplatedPromptExamples {
                 @PP("chooseFrom") ChooseFrom chooseFrom);
 
         @PT(templatePath = "programming_languages_prompt.jte")
-        List<ProgrammingLanguages.Language> getBestLanguagesAsList(
-                @PP("count") int count,
-                @PP("examplesCount") int examplesCount1,
-                @PP("chooseFrom") ChooseFrom chooseFrom);
-
-        @PT(templatePath = "programming_languages_prompt.jte")
         String getBestLanguagesAsString(
                 @PP("count") int count,
                 @PP("examplesCount") int examplesCount,
+                @PP("chooseFrom") ChooseFrom chooseFrom);
+    }
+
+    interface ProgrammingLanguagesServiceAsList {
+
+        @PT(templatePath = "programming_languages_prompt.jte")
+        List<ProgrammingLanguages.Language> getBestLanguagesAsList(
+                @PP("count") int count,
+                @PP("examplesCount") int examplesCount1,
                 @PP("chooseFrom") ChooseFrom chooseFrom);
     }
 
@@ -84,32 +86,42 @@ public class TemplatedPromptExamples {
      */
 
     public static void main(String[] args) {
-        demoLangchainAiServices_returningObject();
-        demoLangchainAiServices_returningList();
-        demoBasicLLM_returningString();
+        demo_returningObject_jsonSchemaStructure();
+        demo_returningObject_jacksonBeanStructure();
+        demo_returningList_jacksonBeanStructure();
+        demo_returningString_jacksonBeanStructure();
+        demo_returningString_jsonSchemaStructure();
     }
 
-    private static void demoLangchainAiServices_returningObject() {
-        ProgrammingLanguagesService service = TemplatedLLMServiceFactory.builder()
+    private static void demo_returningObject_jsonSchemaStructure() {
+        demoReturningObject(new NativeTypeStrategy());
+    }
+
+    private static void demo_returningObject_jacksonBeanStructure() {
+        demoReturningObject(new StringAnswerStrategy());
+    }
+
+    private static void demoReturningObject(LlmServiceStrategy strategy) {
+        ProgrammingLanguagesServiceAsObjectAndString service = TemplatedLLMServiceFactory.builder()
+                .serviceStrategy(strategy)
                 .model(MODEL)
                 .templateProcessor(JteTemplateProcessor.create(TEMPLATES_ROOT))
-                .isToPrintPrompt(true)
                 .aiServiceCustomizer(aiServices -> {
                     /* Put rag, memory, tools, etc. here */
                 })
                 .build()
-                .create(ProgrammingLanguagesService.class);
+                .create(ProgrammingLanguagesServiceAsObjectAndString.class);
 
         ProgrammingLanguages languages = service.getBestLanguagesAsObject(2, 2, ChooseFrom.CHOOSE_FROM);
         LOG.info("\nlanguages as Object: \n{}", SerObject.from(languages).toYaml());
     }
 
-    private static void demoLangchainAiServices_returningList() {
-        ProgrammingLanguagesService service = TemplatedLLMServiceFactory.builder()
+    private static void demo_returningList_jacksonBeanStructure() {
+        ProgrammingLanguagesServiceAsList service = TemplatedLLMServiceFactory.builder()
                 .model(MODEL)
                 .templateProcessor(JteTemplateProcessor.create(TEMPLATES_ROOT))
                 .build()
-                .create(ProgrammingLanguagesService.class);
+                .create(ProgrammingLanguagesServiceAsList.class);
 
         List<ProgrammingLanguages.Language> languages = service.getBestLanguagesAsList(2, 2, ChooseFrom.CHOOSE_FROM);
         LOG.info(
@@ -117,12 +129,21 @@ public class TemplatedPromptExamples {
                 SerArray.from(languages, ProgrammingLanguages.Language.class).toYaml());
     }
 
-    private static void demoBasicLLM_returningString() {
-        ProgrammingLanguagesService service = TemplatedLLMServiceFactory.builder()
+    private static void demo_returningString_jacksonBeanStructure() {
+        demoReturningString(new StringAnswerStrategy());
+    }
+
+    private static void demo_returningString_jsonSchemaStructure() {
+        demoReturningString(new NativeTypeStrategy());
+    }
+
+    private static void demoReturningString(LlmServiceStrategy strategy) {
+        ProgrammingLanguagesServiceAsObjectAndString service = TemplatedLLMServiceFactory.builder()
+                .serviceStrategy(strategy)
                 .model(MODEL)
                 .templateProcessor(JteTemplateProcessor.create(TEMPLATES_ROOT))
                 .build()
-                .create(ProgrammingLanguagesService.class);
+                .create(ProgrammingLanguagesServiceAsObjectAndString.class);
 
         String languages = service.getBestLanguagesAsString(2, 2, ChooseFrom.CHOOSE_FROM);
         LOG.info("\nlanguages as String: \n{}", languages);

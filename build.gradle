@@ -41,6 +41,7 @@ ext {
 
 
 dependencies {
+    implementation 'net.bytebuddy:byte-buddy:1.17.5'
     implementation 'com.google.guava:guava:33.4.6-jre'
     implementation "org.projectlombok:lombok:${lombokVersion}"
     annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
