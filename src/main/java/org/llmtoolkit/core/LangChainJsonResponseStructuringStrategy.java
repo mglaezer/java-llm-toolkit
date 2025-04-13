@@ -15,7 +15,7 @@ import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.StubMethod;
 import org.llmtoolkit.core.annotations.PT;
 
-public class NativeTypeStrategy implements LlmServiceStrategy {
+public class LangChainJsonResponseStructuringStrategy implements ResponseStructuringStrategy {
 
     private static final AtomicInteger counter = new AtomicInteger(0);
 
@@ -66,16 +66,21 @@ public class NativeTypeStrategy implements LlmServiceStrategy {
     }
 
     @Override
-    public Method resolveServiceMethod(Object service, Method originalMethod) throws NoSuchMethodException {
-        Class<?>[] interfaces = service.getClass().getInterfaces();
-        if (interfaces.length == 0) throw new RuntimeException("Service has no interfaces");
-        return interfaces[0].getMethod(originalMethod.getName(), String.class);
-    }
-
-    @Override
     public String augmentPromptWithOutputInstructions(String prompt, Method method, ReturnTypeInfo typeInfo) {
         // Native type strategy doesn't modify the prompt as it relies on langchain4j's built-in type handling
         return prompt;
+    }
+
+    @Override
+    public Object invokeService(Object service, String prompt, Method originalMethod) {
+        try {
+            return service.getClass()
+                    .getInterfaces()[0]
+                    .getMethod(originalMethod.getName(), String.class)
+                    .invoke(service, prompt);
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override

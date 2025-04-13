@@ -6,7 +6,7 @@ import java.lang.reflect.Method;
 import java.util.function.Consumer;
 import org.llmtoolkit.util.json.JsonUtils;
 
-public class StringAnswerStrategy implements LlmServiceStrategy {
+public class JacksonSourceResponseStructuringStrategy implements ResponseStructuringStrategy {
 
     @Override
     public <T> Object createService(
@@ -35,9 +35,8 @@ public class StringAnswerStrategy implements LlmServiceStrategy {
     }
 
     @Override
-    public Method resolveServiceMethod(Object service, Method originalMethod) throws NoSuchMethodException {
-        // StringAnswer always uses the standard "answer" method
-        return service.getClass().getInterfaces()[0].getMethod("answer", String.class);
+    public Object invokeService(Object service, String prompt, Method originalMethod) {
+        return ((StringAnswer) service).answer(prompt);
     }
 
     @Override

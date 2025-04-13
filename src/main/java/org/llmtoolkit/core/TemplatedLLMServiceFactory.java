@@ -25,7 +25,7 @@ public class TemplatedLLMServiceFactory {
     private boolean isToPrintAnswer;
 
     @Builder.Default
-    private LlmServiceStrategy serviceStrategy = new StringAnswerStrategy();
+    private ResponseStructuringStrategy serviceStrategy = new JacksonSourceResponseStructuringStrategy();
 
     @SuppressWarnings("unchecked")
     public <T> T create(Class<T> serviceInterface) {
@@ -77,16 +77,8 @@ public class TemplatedLLMServiceFactory {
 
             Do printPrompt = Do.once(() -> printPrompt(processedPrompt), isToPrintPrompt);
 
-            Method serviceMethod = serviceStrategy.resolveServiceMethod(service, method);
             Object rawResult = withPrintOnError(
-                    () -> {
-                        try {
-                            return serviceMethod.invoke(service, processedPrompt);
-                        } catch (Exception e) {
-                            throw new RuntimeException("Error invoking service", e);
-                        }
-                    },
-                    printPrompt);
+                    () -> serviceStrategy.invokeService(service, processedPrompt, method), printPrompt);
 
             final Object processedResult = serviceStrategy.convertResult(rawResult, typeInfo);
 

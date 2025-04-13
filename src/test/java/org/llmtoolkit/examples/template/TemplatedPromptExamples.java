@@ -94,14 +94,14 @@ public class TemplatedPromptExamples {
     }
 
     private static void demo_returningObject_jsonSchemaStructure() {
-        demoReturningObject(new NativeTypeStrategy());
+        demoReturningObject(new LangChainJsonResponseStructuringStrategy());
     }
 
     private static void demo_returningObject_jacksonBeanStructure() {
-        demoReturningObject(new StringAnswerStrategy());
+        demoReturningObject(new JacksonSourceResponseStructuringStrategy());
     }
 
-    private static void demoReturningObject(LlmServiceStrategy strategy) {
+    private static void demoReturningObject(ResponseStructuringStrategy strategy) {
         ProgrammingLanguagesServiceAsObjectAndString service = TemplatedLLMServiceFactory.builder()
                 .serviceStrategy(strategy)
                 .model(MODEL)
@@ -118,6 +118,7 @@ public class TemplatedPromptExamples {
 
     private static void demo_returningList_jacksonBeanStructure() {
         ProgrammingLanguagesServiceAsList service = TemplatedLLMServiceFactory.builder()
+                .serviceStrategy(new JacksonSourceResponseStructuringStrategy())
                 .model(MODEL)
                 .templateProcessor(JteTemplateProcessor.create(TEMPLATES_ROOT))
                 .build()
@@ -130,14 +131,14 @@ public class TemplatedPromptExamples {
     }
 
     private static void demo_returningString_jacksonBeanStructure() {
-        demoReturningString(new StringAnswerStrategy());
+        demoReturningString(new JacksonSourceResponseStructuringStrategy());
     }
 
     private static void demo_returningString_jsonSchemaStructure() {
-        demoReturningString(new NativeTypeStrategy());
+        demoReturningString(new LangChainJsonResponseStructuringStrategy());
     }
 
-    private static void demoReturningString(LlmServiceStrategy strategy) {
+    private static void demoReturningString(ResponseStructuringStrategy strategy) {
         ProgrammingLanguagesServiceAsObjectAndString service = TemplatedLLMServiceFactory.builder()
                 .serviceStrategy(strategy)
                 .model(MODEL)

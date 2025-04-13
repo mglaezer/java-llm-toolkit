@@ -5,7 +5,7 @@ import dev.langchain4j.service.AiServices;
 import java.lang.reflect.Method;
 import java.util.function.Consumer;
 
-public interface LlmServiceStrategy {
+public interface ResponseStructuringStrategy {
 
     /**
      * Creates a service implementation that will handle LLM interactions
@@ -13,9 +13,9 @@ public interface LlmServiceStrategy {
     <T> Object createService(Class<T> serviceInterface, ChatLanguageModel model, Consumer<AiServices<?>> customizer);
 
     /**
-     * Resolves the method to be called on the underlying service
+     * Invokes the service method with the given prompt
      */
-    Method resolveServiceMethod(Object service, Method originalMethod) throws NoSuchMethodException;
+    Object invokeService(Object service, String prompt, Method originalMethod);
 
     /**
      * Prepares the prompt before sending it to the LLM
