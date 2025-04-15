@@ -2,6 +2,7 @@ package org.llmtoolkit.examples.template;
 
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.googleai.GoogleAiGeminiChatModel;
+import dev.langchain4j.service.Result;
 import gg.jte.CodeResolver;
 import gg.jte.resolve.DirectoryCodeResolver;
 import java.nio.file.Path;
@@ -58,6 +59,14 @@ public class TemplatedPromptExamples {
                 @PP("chooseFrom") ChooseFrom chooseFrom);
     }
 
+    interface ProgrammingLanguagesServiceWithLangChain4jResult {
+        @PT(templatePath = "programming_languages_prompt.jte")
+        Result<ProgrammingLanguages> getBestLanguagesAsObject(
+                @PP("count") int count,
+                @PP("examplesCount") int examplesCount1,
+                @PP("chooseFrom") ChooseFrom chooseFrom);
+    }
+
     interface ProgrammingLanguagesServiceAsList {
 
         @PT(templatePath = "programming_languages_prompt.jte")
@@ -88,6 +97,7 @@ public class TemplatedPromptExamples {
     public static void main(String[] args) {
         demo_returningObject_jsonSchemaStructure();
         demo_returningObject_jacksonBeanStructure();
+        demo_returningObject_withLangChain4jResult();
         demo_returningList_jacksonBeanStructure();
         demo_returningString_jacksonBeanStructure();
         demo_returningString_jsonSchemaStructure();
@@ -114,6 +124,18 @@ public class TemplatedPromptExamples {
 
         ProgrammingLanguages languages = service.getBestLanguagesAsObject(2, 2, ChooseFrom.CHOOSE_FROM);
         LOG.info("\nlanguages as Object: \n{}", SerObject.from(languages).toYaml());
+    }
+
+    private static void demo_returningObject_withLangChain4jResult() {
+        ProgrammingLanguagesServiceWithLangChain4jResult service = TemplatedLLMServiceFactory.builder()
+                .serviceStrategy(new LangChainJsonResponseStructuringStrategy())
+                .model(MODEL)
+                .templateProcessor(JteTemplateProcessor.create(TEMPLATES_ROOT))
+                .build()
+                .create(ProgrammingLanguagesServiceWithLangChain4jResult.class);
+
+        Result<ProgrammingLanguages> languages = service.getBestLanguagesAsObject(2, 2, ChooseFrom.CHOOSE_FROM);
+        LOG.info("\nToken usage: \n{}", languages.tokenUsage());
     }
 
     private static void demo_returningList_jacksonBeanStructure() {

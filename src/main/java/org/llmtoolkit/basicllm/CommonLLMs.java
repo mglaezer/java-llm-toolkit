@@ -11,7 +11,7 @@ public class CommonLLMs {
     // OpenAI Models
     public static final String GPT_O1 = "o1";
     public static final String GPT_O3_MINI = "o3-mini";
-    public static final String GPT_4_5_PREVIEW = "gpt-4.5-preview";
+    public static final String GPT_4_1 = "gpt-4.1";
     public static final String GPT_4O = "gpt-4o";
     public static final String GPT_4O_LATEST = "chatgpt-4o-latest";
     public static final String GPT_4O_MINI = "gpt-4o-mini";

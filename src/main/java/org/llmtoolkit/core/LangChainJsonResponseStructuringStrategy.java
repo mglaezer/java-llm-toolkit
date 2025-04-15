@@ -50,8 +50,7 @@ public class LangChainJsonResponseStructuringStrategy implements ResponseStructu
                         .define("value", "raw")
                         .build();
 
-                // Define method with annotations
-                builder = builder.defineMethod(method.getName(), method.getReturnType(), Visibility.PUBLIC)
+                builder = builder.defineMethod(method.getName(), method.getGenericReturnType(), Visibility.PUBLIC)
                         .withParameter(String.class, "prompt")
                         .intercept(StubMethod.INSTANCE)
                         .annotateMethod(userMessageAnnotation)
