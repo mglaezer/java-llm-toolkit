@@ -20,6 +20,7 @@ public class CommonLLMs {
     public static final String CLAUDE_3_7_SONNET = "claude-3-7-sonnet-20250219";
 
     // Groq Models
+    public static final String LLAMA_4_Maverick = "meta-llama/llama-4-maverick-17b-128e-instruct";
     public static final String LLAMA_3_3 = "llama-3.3-70b-versatile";
     public static final String DEEPSEEK_R1_DISTILL = "deepseek-r1-distill-llama-70b";
     public static final String QWEN_2_5_CODER = "qwen-2.5-coder-32b";
