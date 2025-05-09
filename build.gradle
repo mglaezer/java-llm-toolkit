@@ -1,13 +1,17 @@
 import gg.jte.ContentType
 
+
+
 //file:noinspection SpellCheckingInspection
 plugins {
     id 'java'
     id 'java-library'
     id 'maven-publish'
     id 'com.diffplug.spotless' version '6.25.0'
-    id 'gg.jte.gradle' version '3.2.0'
+    id 'gg.jte.gradle' version "${jteVersion}"
 }
+
+
 
 java {
     sourceCompatibility = JavaVersion.VERSION_17
@@ -57,11 +61,6 @@ repositories {
     mavenCentral()
 }
 
-ext {
-    langchain4jVersion = '1.0.0-beta3'
-    lombokVersion = '1.18.38'
-    junitVersion = '5.9.2'
-}
 
 
 dependencies {
@@ -79,7 +78,7 @@ dependencies {
     implementation "dev.langchain4j:langchain4j-google-ai-gemini:${langchain4jVersion}"
 
     implementation 'org.springframework:spring-web:6.2.5'
-    implementation 'gg.jte:jte:3.2.0'
+    implementation "gg.jte:jte:${jteVersion}"
 
     implementation 'io.github.cdimascio:dotenv-java:3.2.0'
 
