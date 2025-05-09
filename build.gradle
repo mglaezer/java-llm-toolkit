@@ -1,5 +1,5 @@
+//file:noinspection SpellCheckingInspection
 import gg.jte.ContentType
-
 
 
 //file:noinspection SpellCheckingInspection
@@ -10,7 +10,6 @@ plugins {
     id 'com.diffplug.spotless' version '6.25.0'
     id 'gg.jte.gradle' version "${jteVersion}"
 }
-
 
 
 java {
@@ -30,7 +29,6 @@ spotless {
         palantirJavaFormat('2.61.0')
     }
 }
-
 
 
 sourceSets {
@@ -56,11 +54,14 @@ compileJava {
     dependsOn 'spotlessApply'
 }
 
+sourcesJar {
+    dependsOn 'generateJte'
+}
+
 
 repositories {
     mavenCentral()
 }
-
 
 
 dependencies {
@@ -110,7 +111,7 @@ publishing {
     publications {
         //noinspection GroovyAssignabilityCheck
         maven(MavenPublication) {
-		//noinspection GroovyAssignabilityCheck
+            //noinspection GroovyAssignabilityCheck
             from components.java
         }
     }
