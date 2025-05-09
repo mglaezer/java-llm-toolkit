@@ -1,6 +1,5 @@
 package org.llmtoolkit.core;
 
-import gg.jte.CodeResolver;
 import gg.jte.ContentType;
 import gg.jte.TemplateEngine;
 import gg.jte.output.StringOutput;
@@ -15,21 +14,20 @@ public class JteTemplateProcessor implements TemplateProcessor {
 
     private final TemplateEngine templateEngine;
 
-    public static JteTemplateProcessor create(CodeResolver codeResolver) {
-        return new JteTemplateProcessor(codeResolver);
+    public static JteTemplateProcessor create() {
+        return new JteTemplateProcessor();
     }
 
-    private JteTemplateProcessor(CodeResolver codeResolver) {
-        this.templateEngine = TemplateEngine.create(codeResolver, ContentType.Plain);
+    private JteTemplateProcessor() {
+        this.templateEngine = TemplateEngine.createPrecompiled(ContentType.Plain);
     }
 
     private String getTemplatePath(Method method) {
-        String packagePath = method.getDeclaringClass().getPackage().getName().replace('.', '/');
         PT promptAnnotation = method.getAnnotation(PT.class);
         if (promptAnnotation == null) {
             throw new IllegalStateException("Method must be annotated with @" + PT.class.getSimpleName());
         }
-        return packagePath + "/" + promptAnnotation.templatePath();
+        return promptAnnotation.templatePath();
     }
 
     @Override

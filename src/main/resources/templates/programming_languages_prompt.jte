@@ -5,7 +5,7 @@
 Name ${count} best programming languages, and explain why they are the best. Consider all alternatives.
 
 <!-- this is to demonstrate JTE includes -->
-@template.org.llmtoolkit.examples.template.programming_languages_include(count = examplesCount)
+@template.programming_languages_include(count = examplesCount)
 
 Actually, choose languages from these ${chooseFrom.adjective()} options:
 

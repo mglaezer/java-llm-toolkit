@@ -1,9 +1,12 @@
+import gg.jte.ContentType
+
 //file:noinspection SpellCheckingInspection
 plugins {
     id 'java'
     id 'java-library'
     id 'maven-publish'
     id 'com.diffplug.spotless' version '6.25.0'
+    id 'gg.jte.gradle' version '3.2.0'
 }
 
 java {
@@ -24,7 +27,28 @@ spotless {
     }
 }
 
-tasks.named('compileJava') {
+
+
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src/main/java', 'build/generated/sources/jte']
+        }
+    }
+}
+
+jte {
+    sourceDirectory = file('src/main/resources/templates').toPath()
+    targetDirectory = file('build/generated/sources/jte').toPath()
+    contentType = ContentType.Plain
+}
+
+spotlessJava {
+    dependsOn 'generateJte'
+}
+
+compileJava {
+    dependsOn 'generateJte'
     dependsOn 'spotlessApply'
 }
 
@@ -64,7 +88,7 @@ dependencies {
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${junitVersion}"
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.12.1'
 
-    implementation 'ch.qos.logback:logback-classic:1.4.14'
+    implementation 'ch.qos.logback:logback-classic:1.5.18'
 }
 
 test {

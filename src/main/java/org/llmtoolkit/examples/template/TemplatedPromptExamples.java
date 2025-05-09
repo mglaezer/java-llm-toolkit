@@ -3,9 +3,6 @@ package org.llmtoolkit.examples.template;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.googleai.GoogleAiGeminiChatModel;
 import dev.langchain4j.service.Result;
-import gg.jte.CodeResolver;
-import gg.jte.resolve.DirectoryCodeResolver;
-import java.nio.file.Path;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.llmtoolkit.basicllm.CommonLLMs;
@@ -31,7 +28,6 @@ import org.slf4j.LoggerFactory;
 public class TemplatedPromptExamples {
     private static final Logger LOG = LoggerFactory.getLogger(TemplatedPromptExamples.class);
 
-    private static final CodeResolver TEMPLATES_ROOT = new DirectoryCodeResolver(Path.of("src/test/java"));
     public static final ChatLanguageModel MODEL = GoogleAiGeminiChatModel.builder()
             .modelName(CommonLLMs.GEMINI_2_0_FLASH)
             .apiKey(Env.getRequired("GEMINI_API_KEY"))
@@ -115,7 +111,7 @@ public class TemplatedPromptExamples {
         ProgrammingLanguagesServiceAsObjectAndString service = TemplatedLLMServiceFactory.builder()
                 .serviceStrategy(strategy)
                 .model(MODEL)
-                .templateProcessor(JteTemplateProcessor.create(TEMPLATES_ROOT))
+                .templateProcessor(JteTemplateProcessor.create())
                 .aiServiceCustomizer(aiServices -> {
                     /* Put rag, memory, tools, etc. here */
                 })
@@ -130,7 +126,7 @@ public class TemplatedPromptExamples {
         ProgrammingLanguagesServiceWithLangChain4jResult service = TemplatedLLMServiceFactory.builder()
                 .serviceStrategy(new LangChainJsonResponseStructuringStrategy())
                 .model(MODEL)
-                .templateProcessor(JteTemplateProcessor.create(TEMPLATES_ROOT))
+                .templateProcessor(JteTemplateProcessor.create())
                 .build()
                 .create(ProgrammingLanguagesServiceWithLangChain4jResult.class);
 
@@ -142,7 +138,7 @@ public class TemplatedPromptExamples {
         ProgrammingLanguagesServiceAsList service = TemplatedLLMServiceFactory.builder()
                 .serviceStrategy(new JacksonSourceResponseStructuringStrategy())
                 .model(MODEL)
-                .templateProcessor(JteTemplateProcessor.create(TEMPLATES_ROOT))
+                .templateProcessor(JteTemplateProcessor.create())
                 .build()
                 .create(ProgrammingLanguagesServiceAsList.class);
 
@@ -164,7 +160,7 @@ public class TemplatedPromptExamples {
         ProgrammingLanguagesServiceAsObjectAndString service = TemplatedLLMServiceFactory.builder()
                 .serviceStrategy(strategy)
                 .model(MODEL)
-                .templateProcessor(JteTemplateProcessor.create(TEMPLATES_ROOT))
+                .templateProcessor(JteTemplateProcessor.create())
                 .build()
                 .create(ProgrammingLanguagesServiceAsObjectAndString.class);
 
