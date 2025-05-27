@@ -1,7 +1,7 @@
 package org.llmtoolkit.basicllm;
 
 import dev.langchain4j.model.anthropic.AnthropicChatModel;
-import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.chat.ChatModel;
 import java.time.Duration;
 
 public class AnthropicChatModelProvider implements ChatModelProvider {
@@ -12,7 +12,7 @@ public class AnthropicChatModelProvider implements ChatModelProvider {
     }
 
     @Override
-    public ChatLanguageModel createChatModel(BasicLLM llm) {
+    public ChatModel createChatModel(BasicLLM llm) {
         if (llm.getReasoningEffort() != null) {
             throw new RuntimeException(
                     "Reasoning effort is not supported for Anthropic thinking mode, use thinking tokens instead");

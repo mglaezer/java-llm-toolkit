@@ -1,6 +1,6 @@
 package org.llmtoolkit.examples.template;
 
-import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.googleai.GoogleAiGeminiChatModel;
 import dev.langchain4j.service.Result;
 import java.util.List;
@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory;
 public class TemplatedPromptExamples {
     private static final Logger LOG = LoggerFactory.getLogger(TemplatedPromptExamples.class);
 
-    public static final ChatLanguageModel MODEL = GoogleAiGeminiChatModel.builder()
+    public static final ChatModel MODEL = GoogleAiGeminiChatModel.builder()
             .modelName(CommonLLMs.GEMINI_2_0_FLASH)
             .apiKey(Env.getRequired("GEMINI_API_KEY"))
             .build();

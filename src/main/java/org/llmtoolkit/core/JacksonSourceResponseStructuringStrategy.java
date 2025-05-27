@@ -1,6 +1,6 @@
 package org.llmtoolkit.core;
 
-import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.service.AiServices;
 import java.lang.reflect.Method;
 import java.util.function.Consumer;
@@ -9,11 +9,10 @@ import org.llmtoolkit.util.json.JsonUtils;
 public class JacksonSourceResponseStructuringStrategy implements ResponseStructuringStrategy {
 
     @Override
-    public <T> Object createService(
-            Class<T> serviceInterface, ChatLanguageModel model, Consumer<AiServices<?>> customizer) {
+    public <T> Object createService(Class<T> serviceInterface, ChatModel model, Consumer<AiServices<?>> customizer) {
         // Create a single StringAnswer service to handle all method calls
         AiServices<StringAnswer> baseBuilder =
-                AiServices.builder(StringAnswer.class).chatLanguageModel(model);
+                AiServices.builder(StringAnswer.class).chatModel(model);
 
         if (customizer != null) {
             customizer.accept(baseBuilder);

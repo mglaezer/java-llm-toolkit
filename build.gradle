@@ -75,8 +75,8 @@ dependencies {
 
     implementation "dev.langchain4j:langchain4j:${langchain4jVersion}"
     implementation "dev.langchain4j:langchain4j-open-ai:${langchain4jVersion}"
-    implementation "dev.langchain4j:langchain4j-anthropic:${langchain4jVersion}"
-    implementation "dev.langchain4j:langchain4j-google-ai-gemini:${langchain4jVersion}"
+    implementation "dev.langchain4j:langchain4j-anthropic:${langchain4jVersionBeta}"
+    implementation "dev.langchain4j:langchain4j-google-ai-gemini:${langchain4jVersionBeta}"
 
     implementation 'org.springframework:spring-web:6.2.5'
     implementation "gg.jte:jte:${jteVersion}"

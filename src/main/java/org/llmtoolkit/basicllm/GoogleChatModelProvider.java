@@ -1,6 +1,6 @@
 package org.llmtoolkit.basicllm;
 
-import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.googleai.GoogleAiGeminiChatModel;
 import java.time.Duration;
 
@@ -12,7 +12,7 @@ public class GoogleChatModelProvider implements ChatModelProvider {
     }
 
     @Override
-    public ChatLanguageModel createChatModel(BasicLLM llm) {
+    public ChatModel createChatModel(BasicLLM llm) {
         if (llm.getThinkingTokens() != null) {
             throw new UnsupportedOperationException("Google does not support specifying thinking tokens");
         }

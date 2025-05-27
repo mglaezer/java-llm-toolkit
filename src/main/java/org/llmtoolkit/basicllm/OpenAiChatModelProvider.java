@@ -1,6 +1,6 @@
 package org.llmtoolkit.basicllm;
 
-import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.model.openai.OpenAiChatRequestParameters;
 import java.time.Duration;
@@ -15,7 +15,7 @@ public class OpenAiChatModelProvider implements ChatModelProvider {
     }
 
     @Override
-    public ChatLanguageModel createChatModel(BasicLLM llm) {
+    public ChatModel createChatModel(BasicLLM llm) {
         OpenAiChatModel.OpenAiChatModelBuilder builder =
                 OpenAiChatModel.builder().modelName(llm.getModel()).apiKey(apiKey);
 

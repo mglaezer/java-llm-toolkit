@@ -2,17 +2,17 @@ package org.llmtoolkit.basicllm;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
-import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.chat.ChatModel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NonNull;
 
 /**
- * A simplified factory for creating ChatLanguageModel instances with commonly used parameters.
+ * A simplified factory for creating ChatModel instances with commonly used parameters.
  */
 @Getter
 @Builder(toBuilder = true)
-public class BasicLLM implements Supplier<ChatLanguageModel> {
+public class BasicLLM implements Supplier<ChatModel> {
     @NonNull
     private final String model;
 
@@ -27,7 +27,7 @@ public class BasicLLM implements Supplier<ChatLanguageModel> {
     private final Integer thinkingTokens;
     private final Integer timeout;
 
-    public static Supplier<ChatLanguageModel> of(String model, ChatModelProvider provider) {
+    public static Supplier<ChatModel> of(String model, ChatModelProvider provider) {
         return Suppliers.memoize(() -> BasicLLM.builder()
                 .model(model)
                 .provider(provider)
@@ -36,7 +36,7 @@ public class BasicLLM implements Supplier<ChatLanguageModel> {
                 .get());
     }
 
-    public static Supplier<ChatLanguageModel> of(String model, ChatModelProvider provider, boolean thinking) {
+    public static Supplier<ChatModel> of(String model, ChatModelProvider provider, boolean thinking) {
         return Suppliers.memoize(() -> BasicLLM.builder()
                 .model(model)
                 .provider(provider)
@@ -60,7 +60,7 @@ public class BasicLLM implements Supplier<ChatLanguageModel> {
 
     @Override
     @NonNull
-    public ChatLanguageModel get() {
+    public ChatModel get() {
         return provider.createChatModel(this);
     }
 }

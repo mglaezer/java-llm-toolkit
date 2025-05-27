@@ -1,6 +1,6 @@
 package org.llmtoolkit.core;
 
-import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.service.AiServices;
 import dev.langchain4j.service.UserMessage;
 import dev.langchain4j.service.V;
@@ -20,11 +20,10 @@ public class LangChainJsonResponseStructuringStrategy implements ResponseStructu
     private static final AtomicInteger counter = new AtomicInteger(0);
 
     @Override
-    public <T> Object createService(
-            Class<T> serviceInterface, ChatLanguageModel model, Consumer<AiServices<?>> customizer) {
+    public <T> Object createService(Class<T> serviceInterface, ChatModel model, Consumer<AiServices<?>> customizer) {
         Class<?> modifiedInterface = createModifiedInterface(serviceInterface);
 
-        AiServices<?> aiServicesBuilder = AiServices.builder(modifiedInterface).chatLanguageModel(model);
+        AiServices<?> aiServicesBuilder = AiServices.builder(modifiedInterface).chatModel(model);
 
         if (customizer != null) {
             customizer.accept(aiServicesBuilder);

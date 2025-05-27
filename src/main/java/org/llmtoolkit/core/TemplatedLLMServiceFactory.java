@@ -1,6 +1,6 @@
 package org.llmtoolkit.core;
 
-import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.service.AiServices;
 import java.lang.reflect.*;
 import java.util.function.Consumer;
@@ -15,7 +15,7 @@ import org.llmtoolkit.util.Do;
 @Builder
 public class TemplatedLLMServiceFactory {
     @NonNull
-    private final ChatLanguageModel model;
+    private final ChatModel model;
 
     @NonNull
     private final TemplateProcessor templateProcessor;
